@@ -118,7 +118,7 @@ fun UserProfileScreen(onBack: () -> Unit) {
                         value = profile.intro,
                         onValueChange = viewModel::updateIntro,
                         label = { Text("想对 TA 说的话") },
-                        placeholder = { Text("例如：我最近在准备比赛，压力有点大，希望有人能听我说说话") },
+                        placeholder = { Text("例如：我最近在准备考试，压力有点大，希望有人能听我说说话") },
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
