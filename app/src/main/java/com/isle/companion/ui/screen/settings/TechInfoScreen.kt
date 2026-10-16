@@ -121,6 +121,26 @@ fun TechInfoScreen(onBack: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
+                    Spacer(Modifier.height(14.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        text = "未成年人保护提示",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "· 「恋人」等亲密关系定位仅用于情感陪伴场景的角色扮演，" +
+                            "属于虚构设定，不代表真实的恋爱关系。\n\n" +
+                            "· 本应用面向成年人使用。若你未满 18 周岁，" +
+                            "请在监护人知情同意的前提下使用，并避免过度依赖虚拟关系。\n\n" +
+                            "· 如你正经历情绪困扰或心理危机，" +
+                            "请及时向家长、老师或专业机构求助。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp
+                    )
                 }
             }
 
