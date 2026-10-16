@@ -116,10 +116,15 @@ fun TechInfoScreen(onBack: () -> Unit) {
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "本应用用于 AI 应用创新挑战赛参赛作品展示，不替代专业心理咨询服务。",
+                        text = "心屿是一款专注于情感陪伴的原生 Android 应用。\n" +
+                            "角色、对话与记忆全部保存在你的手机上；" +
+                            "语义向量检索在设备本地完成，不产生任何网络请求。\n\n" +
+                            "本应用不替代专业心理咨询服务。若你正经历持续的情绪困扰，" +
+                            "请及时寻求专业帮助。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        lineHeight = 20.sp
                     )
                     Spacer(Modifier.height(14.dp))
                     HorizontalDivider()
