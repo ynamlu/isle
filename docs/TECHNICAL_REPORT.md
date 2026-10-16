@@ -65,7 +65,9 @@ date: 2026 年 10 月
 
 ## 二、意图控制策略（Intent Control）
 
-> **[配图建议 1]** 终端执行全量编译命令并通过的输出截图（佐证「让编译器当裁判」）。
+![图 1 · 全量编译验证：BUILD SUCCESSFUL，0 警告](screenshots/fig1_compile.png)
+
+*（图 1 · 全量编译验证：BUILD SUCCESSFUL，0 警告）*
 
 Vibe Coding 的核心风险是"AI 生成的结果看似合理却偏离意图"。本项目用四层机制约束。
 
@@ -93,7 +95,9 @@ Vibe Coding 的核心风险是"AI 生成的结果看似合理却偏离意图"。
 
 ### 2.2 约束二：让编译器与测试当裁判
 
-> **[配图建议 2]** 依赖树分析（dependencyInsight）输出截图，展示如何定位到冲突来源。
+![图 2 · 依赖解析：定位 kotlin-stdlib 被拉高的来源](screenshots/fig2_dependency.png)
+
+*（图 2 · 依赖解析：定位 kotlin-stdlib 被拉高的来源）*
 
 任何结论都必须可验证，不接受"看起来对"：
 
@@ -175,7 +179,9 @@ score = semantic * 0.8f + lexical * 0.2f + memory.importance * 0.1f
 
 ## 三、架构设计
 
-> **[配图建议 3]** 建议将 3.1 的字符画分层图重绘为正式架构图（四层 + 关键类名）。
+![图 3 · 架构分层（UI / Domain / Data / 基础设施）](screenshots/fig3_architecture.png)
+
+*（图 3 · 架构分层（UI / Domain / Data / 基础设施））*
 
 ### 3.1 总体分层
 
@@ -203,7 +209,9 @@ score = semantic * 0.8f + lexical * 0.2f + memory.importance * 0.1f
 
 ### 3.2 数据模型
 
-> **[配图建议 4]** 三张表的 ER 图（角色 1—N 消息 / 角色 1—N 记忆，外键级联）。
+![图 4 · 数据模型：三张表与外键级联关系](screenshots/fig4_er.png)
+
+*（图 4 · 数据模型：三张表与外键级联关系）*
 
 **characters 表**
 
@@ -255,7 +263,9 @@ score = semantic * 0.8f + lexical * 0.2f + memory.importance * 0.1f
 
 ### 3.4 关键数据流：一次对话的完整链路
 
-> **[配图建议 5]** 将 11 步链路绘制为时序图（用户 / ViewModel / Repository / 端侧模型 / 模型服务）。
+![图 5 · 一次对话的完整时序（12 步）](screenshots/fig5_sequence.png)
+
+*（图 5 · 一次对话的完整时序（12 步））*
 
 ```
 ① 用户在聊天页输入（可附图片）
@@ -297,7 +307,9 @@ score = semantic * 0.8f + lexical * 0.2f + memory.importance * 0.1f
 
 ## 四、端侧记忆引擎（核心技术）
 
-> **[配图建议 6]** 端侧记忆链路示意图（对话 → 抽取 → 分词 → ONNX 推理 → 入库 → 召回）。
+![图 6 · 端侧语义记忆链路（全离线）](screenshots/fig6_pipeline.png)
+
+*（图 6 · 端侧语义记忆链路（全离线））*
 
 ### 4.1 模型选型
 
@@ -356,7 +368,9 @@ VectorMath.l2Normalize(cls)            // L2 归一化
 
 ### 4.4 实测验证
 
-> **[配图建议 7]** 仪器化测试通过截图与相似度实测输出截图。
+![图 7 · 仪器化测试：2 tests, 0 failures](screenshots/fig7_test.png)
+
+*（图 7 · 仪器化测试：2 tests, 0 failures）*
 
 ```
 ./gradlew connectedDebugAndroidTest
