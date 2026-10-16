@@ -520,11 +520,17 @@ LLM 输出常包裹在 Markdown 代码块或夹杂思考标签中。解析链路
 
 ![图 11 · 聊天页：流式对话与多模态图片交流](screenshots/02_chat.png)
 
-![图 12 · 设置页：关于简介内嵌 + 四个二级入口](screenshots/07_settings_bottom.png)
+**设置页（顶部）**：关于心屿简介内嵌展示
 
-![图 13 · 我的资料：全局共享的用户画像](screenshots/06_profile.png)
+![图 12 · 设置页顶部：关于心屿简介内嵌](screenshots/05_settings.png)
 
-*（图 10–13 为应用真机截图）*
+**设置页（底部）**：我的资料 / 模型服务 / 回复风格 / 技术信息 四个二级入口
+
+![图 13 · 设置页底部：四个二级入口](screenshots/07_settings_bottom.png)
+
+![图 14 · 我的资料：全局共享的用户画像](screenshots/06_profile.png)
+
+*（图 10–14 为应用真机截图）*
 
 
 
@@ -614,4 +620,4 @@ assertTrue(cosine(hiking, mountain) > cosine(hiking, stock) + 0.05f)  // 语义�
 | 图 7 | 4.4 | 仪器化测试通过截图 | 终端截图 |
 | 图 8 | 5.1 | 角色编辑页截图 | ✅ 已插入（screenshots/04） |
 | 图 9 | 5.2 | 记忆管理页截图 | ✅ 已插入（screenshots/03） |
-| 图 10–13 | 7.2 | 首页 / 聊天页 / 设置页 / 我的资料 | ✅ 已插入（screenshots/01,02,07,06） |
+| 图 10–14 | 7.2 | 首页 / 聊天页 / 设置页顶部 / 设置页底部 / 我的资料 | ✅ 已插入（screenshots/01,02,05,07,06） |
