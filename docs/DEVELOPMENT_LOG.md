@@ -5,6 +5,19 @@
 
 ---
 
+## 目录
+
+- [阶段零 · 技术选型与架构决策](#阶段零--技术选型与架构决策)
+- [阶段一 · 工程骨架](#阶段一--工程骨架)
+- [阶段二 · 数据层与角色系统](#阶段二--数据层与角色系统)
+- [阶段三 · 端侧语义记忆引擎](#阶段三--端侧语义记忆引擎)
+- [阶段四 · 视觉体系重构](#阶段四--视觉体系重构)
+- [阶段五 · 收尾与交付](#阶段五--收尾与交付)
+- [问题总览](#问题总览)
+- [附：AI 协同方式说明](#附ai-协同方式说明)
+
+---
+
 ## 阶段零 · 技术选型与架构决策
 
 ### 目标
@@ -12,152 +25,383 @@
 
 ### 真实决策过程
 
-**平台范围**：赛题为移动端应用，团队资源集中在 Android 单端打磨，不做跨平台折中。
+**平台范围**：赛题为移动端应用。团队资源有限，集中在 Android 单端打磨质量，不做跨平台折中。
 
-**技术栈选择依据**：
+**技术栈选择依据**
 
-| 维度 | 评估 | 结论 |
+| 维度 | 评估要点 | 结论 |
 | --- | --- | --- |
-| 端侧 AI 推理 | 核心差异化能力是**端侧语义向量**（记忆检索），需要直接调用 ONNX Runtime 原生接口 | 原生 Kotlin 集成链路最短 |
-| 系统能力 | 输入法、图片选择、文件存储、通知等系统 API 直连 | 原生 Kotlin 无需插件桥接 |
-| UI 表达 | 液态玻璃（真实背景模糊）需要底层渲染控制 | Compose + 原生渲染可控 |
+| 端侧 AI 推理 | 核心差异化能力是**端侧语义向量**（长期记忆检索），需要直接调用 ONNX Runtime 原生接口 | 原生 Kotlin 集成链路最短 |
+| 系统能力 | 图片选择、相机、文件存储、输入法、通知等系统 API 直连 | 原生 Kotlin 无需插件桥接 |
+| UI 表达 | 液态玻璃（真实背景模糊）需要底层渲染控制能力 | Compose + 原生渲染可控 |
+| 构建可控性 | 需在无 Android Studio 的命令行环境下完成全部构建与验证 | Gradle Wrapper + 命令行即可 |
 
-**最终决策**：**Kotlin + Jetpack Compose 原生 Android**。该决策使端侧向量推理从"跨语言桥接调试"
-降为"直接调用 API"，是项目能在一个短周期内跑通核心能力的前提。
+**最终决策**：**Kotlin + Jetpack Compose 原生 Android**。
+该决策使端侧向量推理从"跨语言桥接调试"降为"直接调用 API"，是项目能在一个短周期内
+跑通核心能力的前提。
 
 ### 架构分层（先定约束，再让 AI 生成代码）
-```
-UI（Compose Screen / ViewModel）
-  ↓
-Domain（提示词组装 / 记忆引擎 / 向量运算）
-  ↓
-Data（Room / DataStore / DeepSeek 客户端 / 仓储）
-```
-**约束原则**：AI 生成的任何代码必须落在上述四层之内，禁止跨层直接调用；
-依赖注入使用手写 `AppContainer`，不引入 DI 框架（减少 AI 幻觉面）。
 
-## 阶段一 · 项目骨架
+```
+┌──────────────────────────────────────────────────────┐
+│ UI 层（Jetpack Compose）                              │
+│  Screen（无状态）  ←→  ViewModel（StateFlow 单向数据流）│
+├──────────────────────────────────────────────────────┤
+│ Domain 层                                             │
+│  PromptBuilder   —— 角色卡 + 记忆 + 用户资料 → 提示词   │
+│  MemoryExtractor —— 对话 → 结构化记忆（LLM）           │
+│  BertTokenizer / TextEmbedder / VectorMath            │
+├──────────────────────────────────────────────────────┤
+│ Data 层                                               │
+│  Repository：Character / Chat / Memory                │
+│  本地：Room（3 表）+ DataStore（2 组配置）              │
+│  远端：DeepSeekClient（SSE）+ ContentFactory（多模态）  │
+├──────────────────────────────────────────────────────┤
+│ 基础设施                                              │
+│  AppContainer（手写容器）· AvatarStorage（图片分级压缩）│
+└──────────────────────────────────────────────────────┘
+```
+
+**约束原则**（写进每次生成 Prompt 的固定前缀）：
+
+1. AI 生成的任何代码必须落在上述四层之内，**禁止跨层直接调用**；
+2. 依赖注入使用手写 `AppContainer`，**不引入 DI 框架**（依赖少、结构透明，减少 AI 幻觉面）；
+3. 状态一律用 `StateFlow` 从 ViewModel 单向流向 UI，禁止 UI 反向持有可变状态；
+4. 高风险能力（端侧模型、网络）必须先定义接口与失败降级路径。
+
+---
+
+## 阶段一 · 工程骨架
 
 ### 目标
-搭建可编译、可运行的最小工程。
+产出可编译、可安装、可启动的最小工程，为后续所有功能提供稳定的地基。
 
-### 产出
-`settings.gradle.kts` · 根 `build.gradle.kts` · `gradle/libs.versions.toml`（版本目录）·
-`gradle.properties` · Gradle Wrapper 9.6.0 · `AndroidManifest.xml` · `res/values/*`
+### 产出清单
+
+| 文件 | 作用 |
+| --- | --- |
+| `settings.gradle.kts` | 仓库与模块声明、插件仓库配置 |
+| `build.gradle.kts`（根） | 插件声明（不在此处配置模块） |
+| `gradle/libs.versions.toml` | **版本目录**：所有依赖版本的唯一来源 |
+| `gradle.properties` | 构建开关（含后续的关键约束） |
+| `gradle/wrapper/*` | Gradle 9.6.0 Wrapper（随仓库分发） |
+| `app/build.gradle.kts` | 模块配置：SDK 版本、Compose、签名、密钥注入 |
+| `AndroidManifest.xml` | 应用声明、FileProvider、软键盘模式 |
+| `res/values/*` | 主题、颜色、字符串 |
 
 ### 关键问题与修复
-| # | 报错 | 定位过程 | 修复 |
-| --- | --- | --- | --- |
-| 1 | `Cannot add extension with name 'kotlin', as there is an extension already registered` | AGP 9 已内置 Kotlin 支持，与独立 `org.jetbrains.kotlin.android` 插件冲突 | 移除独立 Kotlin 插件，改用内置 |
-| 2 | `Starting in Kotlin 2.0, the Compose Compiler Gradle plugin is required` | Compose 编译需要独立编译器插件 | 应用 `org.jetbrains.kotlin.plugin.compose` |
-| 3 | Gradle 报 TLS handshake failed | 瞬时网络抖动，重试即通过 | 重试 |
+
+**问题 1：AGP 9 内置 Kotlin 与独立 Kotlin 插件冲突**
+
+```
+Cannot add extension with name 'kotlin', as there is an extension already registered with that name.
+```
+
+- **定位**：反编译 AGP jar，发现 `BooleanOption.BUILT_IN_KOTLIN`（对应 `android.builtInKotlin`），
+  确认 AGP 9.4.1 已内置 Kotlin 支持并注册了 `kotlin` 扩展。
+- **首轮修复**：移除独立 `org.jetbrains.kotlin.android` 插件。
+- **连带问题**：移除后 Compose 编译报错
+  `Starting in Kotlin 2.0, the Compose Compiler Gradle plugin is required`，
+  补回 `org.jetbrains.kotlin.plugin.compose` 后通过。
+
+**问题 2：Gradle 拉取依赖时 TLS 握手失败**
+
+- **现象**：`Remote host terminated the handshake`
+- **定位**：用 `curl` 单独测试各仓库连通性，均返回 200 → 判定为瞬时抖动而非配置问题。
+- **修复**：重试即通过（后续构建未复现）。
 
 ### 验证
-`./gradlew assembleDebug` → **BUILD SUCCESSFUL**，产出 11.6MB APK。
+```
+./gradlew assembleDebug
+BUILD SUCCESSFUL in 33s
+产物：app-debug.apk（11.6 MB）
+```
 
 ---
 
 ## 阶段二 · 数据层与角色系统
 
 ### 目标
-落地三张核心表与数据流闭环。
+打通"角色 → 会话 → 记忆"的数据闭环，并让 AI 能真正回复。
 
-### 产出
-- **Room**：`CharacterEntity`（角色）、`MessageEntity`（会话）、`MemoryEntity`（长期记忆，含 `embedding` 二进制列）
-- 三个 DAO + `IsleDatabase`（外键级联删除）
-- **DeepSeek 客户端**：`DeepSeekApi`（Retrofit，`@Url` 支持运行时可配地址）+ `DeepSeekClient`（OkHttp SSE 流式 + 可取消）
-- **多模态消息工厂** `ContentFactory`：文本 / 图片 base64 内联（`image_url`）
-- **提示词引擎** `PromptBuilder`：角色卡 + 召回记忆 + 用户资料 → 系统提示词
-- **仓储层** 与 **`AppContainer`** 依赖容器
-- **UI**：角色列表 / 角色编辑 / 聊天 / 设置四个页面 + Navigation 路由
-- **头像上传**：Photo Picker + FileProvider 拍照
+### 产出清单
+
+**Room 数据层**
+- `CharacterEntity`：名称、关系类型、性格、背景、说话风格、开场白、头像路径
+- `MessageEntity`：角色 ID 外键、role、内容、图片路径、时间戳
+- `MemoryEntity`：内容、类别、重要度、**embedding 二进制列**、创建/最近使用时间
+- 三个 DAO + `IsleDatabase`（**外键 CASCADE**：删除角色自动清除会话与记忆）
+- `MemoryEntity` 手写 `equals/hashCode`（正确处理 `ByteArray` 字段）
+
+**网络层**
+- `DeepSeekApi`：Retrofit 接口，使用 `@Url` 以支持**运行时配置模型地址**
+- `DeepSeekClient`：基于 okhttp-sse，支持流式回调与**主动取消**（页面退出即断开）
+- `ContentFactory`：构造纯文本 / **多模态（文本 + 图片 base64 内联）** 消息
+- DTO 兼容 DeepSeek 的 `reasoning_content` 字段
+
+**Domain 与仓储**
+- `PromptBuilder`：把角色卡 + 召回记忆 + 用户资料组装成系统提示词
+- `CharacterRepository / ChatRepository / MemoryRepository`
+- `AppContainer`：集中构建数据库、网络、仓储、工具
+
+**UI 与交互**
+- 角色列表、角色编辑（关系类型选择 + 头像上传）、聊天页、设置页
+- `ImagePicker`：相册（Photo Picker，无需权限）+ 拍照（FileProvider）
+- `AvatarStorage`：图片导入与压缩
 
 ### 关键问题与修复
-| # | 报错 | 定位过程 | 修复 |
-| --- | --- | --- | --- |
-| 4 | `Using kotlin.sourceSets DSL to add Kotlin sources is not allowed with built-in Kotlin` | KSP 需要向 kotlin sourceSets 注入生成源码，AGP 9 默认禁止 | 增加 `android.disallowKotlinSourceSets=false` |
-| 5 | `Class 'kotlin.reflect.KClass' was compiled with an incompatible version of Kotlin (2.4.0 vs 2.2.0)` | 依赖解析把 `kotlin-stdlib` 拉到 2.4.10 | 逐库排查，定位到 Coil 3.6.3 强约束 stdlib 2.4；降级 Coil 至 **3.4.0** |
-| 6 | 聊天图片点开大图模糊 | 发现聊天图片复用了头像压缩逻辑（512px） | 抽取 `maxSize` 参数：头像 512px、聊天图 **1600px** |
+
+**问题 3：KSP 注入源码被 AGP 9 拒绝**
+
+```
+Using kotlin.sourceSets DSL to add Kotlin sources is not allowed with built-in Kotlin.
+Solution: ... set android.disallowKotlinSourceSets=false in gradle.properties.
+```
+- **原因**：Room 依赖 KSP 生成代码，而 KSP 需要把生成目录注入 `kotlin.sourceSets`。
+- **修复**：按官方提示加入 `android.disallowKotlinSourceSets=false`。
+
+**问题 4：依赖的 Kotlin 元数据版本高于编译器**
+
+```
+Class 'kotlin.reflect.KClass' was compiled with an incompatible version of Kotlin.
+The actual metadata version is 2.4.0, but the compiler version 2.2.0 can read versions up to 2.3.0.
+```
+- **定位**：执行 `dependencyInsight --dependency kotlin-stdlib --configuration debugCompileClasspath`，
+  显示 **Coil 3.6.3 通过 constraint 强制 `kotlin-stdlib:2.4.10`**；
+  其余候选版本最高为 2.3.20（2.2.0 编译器可读）。
+- **修复**：逐版本核对 POM，确认 Coil **3.4.0** 依赖 stdlib 2.3.10 → 降级至 3.4.0。
+- **教训**：这类"版本天花板"问题在阶段四再次出现，最终以升级编译器根治（见问题 10）。
+
+**问题 5：聊天图片点开模糊**
+
+- **现象**：图片消息点开全屏查看时明显发虚。
+- **定位**：沿调用链回溯 `ChatViewModel.attachImage` → `AvatarStorage.importFromUri`，
+  发现聊天图片**复用了头像的压缩逻辑（512px 上限）**。
+- **修复**：为存储逻辑抽出 `maxSize` 参数——头像 512px、**聊天图 1600px**；
+  同时把大图查看器的容器从 `fillMaxWidth` 改为 `fillMaxSize`。
+- **残留说明**：修复前已存入的旧图不追溯，重新发送即清晰。
 
 ### 验证
-- 真机安装启动，首屏渲染正常
-- 与角色完成真实对话，回复符合角色设定（闺蜜口吻、使用口癖）
-- **图片多模态实测**：发送注册页截图，AI 准确描述了页面内容
+
+| 项目 | 结果 |
+| --- | --- |
+| 真机安装启动 | 正常，无崩溃 |
+| 角色人设 | 回复符合设定（闺蜜口吻、使用预设口癖「嗯嗯」「其实呀」） |
+| 开场白 | 首次进入聊天页自动发送角色开场白 |
+| **图片多模态** | 发送注册页截图后，AI 准确描述了页面内容（用户名、密码框、性别单选框、按钮、底部提示） |
 
 ---
 
 ## 阶段三 · 端侧语义记忆引擎
 
 ### 目标
-实现"完全离线"的长期记忆检索，形成核心差异化。
+实现**完全离线**的长期记忆检索——这是本产品区别于同类方案的核心。
 
-### 产出
-- **模型**：`bge-small-zh-v1.5` ONNX **int8 量化版**（23.9MB）+ `vocab.txt`（21128 词），随包分发于 `assets/embedding/`
-- **`BertTokenizer`**：自实现 BERT WordPiece 分词（CJK 字符切分 + 贪心最长匹配）
-- **`TextEmbedder`**：ONNX Runtime 推理，CLS 池化 + L2 归一化，输出 512 维向量
-- **`VectorMath`**：余弦相似度 + FloatArray 字节序列化（存 Room）
-- **`MemoryRepository`**：写入自动补向量；召回采用 `语义 0.8 + 关键词 0.2 + 重要度 0.1` 加权
-- **`MemoryExtractor`**：用 LLM 从对话抽取事实（JSON 数组，限 5 条/轮）
-- **记忆管理界面**：分类标签、单条删除、一键清空
+### 产出清单
 
-### 关键决策：降低集成风险
-先用「关键词 + 重要度」实现召回，**把检索层抽象为 `EmbeddingProvider` 接口**，
-再接入 ONNX 实现；模型加载失败自动降级为无向量模式，不影响应用其他功能。
+**端侧模型**
+- `bge-small-zh-v1.5` ONNX **int8 量化版**（23.9 MB）+ `vocab.txt`（21128 词条），
+  随包分发于 `app/src/main/assets/embedding/`
+- 选型理由：int8 量化在体积（24MB）与精度之间取得平衡；512 维足以支撑短文本记忆检索
+
+**推理链路**
+- `BertTokenizer`：自实现 BERT WordPiece 分词
+  - CJK 字符逐字切分 → 标点切分 → 贪心最长匹配 → 补 `[CLS]`/`[SEP]`
+- `TextEmbedder`：ONNX Runtime 推理
+  - 输入 `input_ids` / `attention_mask` / `token_type_ids`
+  - 输出 `last_hidden_state` → **CLS 池化** → **L2 归一化** → 512 维向量
+- `VectorMath`：余弦相似度 + `FloatArray` ↔ `ByteArray`（Little-Endian 序列化）
+
+**业务链路**
+- `EmbeddingProvider` 接口 + `OnnxEmbeddingProvider` 实现（**加载失败自动降级**）
+- `MemoryRepository`：
+  - 写入：内容去重 → 生成向量 → 落库
+  - 召回：候选池（按重要度 + 最近使用，限 200 条）→
+    加权打分 `语义 0.8 + 关键词 0.2 + 重要度 0.1` → Top-K
+- `MemoryExtractor`：用 LLM 从对话抽取事实，输出 JSON 数组（限 5 条/轮）
+
+**界面**
+- 记忆管理页：分类标签（信息/喜好/经历/关系/约定）、单条删除、一键清空
+
+### 关键设计：抽象先行 + 降级路径
+
+先实现「关键词 + 重要度」召回，把检索抽象为 `EmbeddingProvider` 接口，再接 ONNX 实现。
+这样即使模型加载失败（设备兼容性、内存不足），应用**对话、角色、记忆书写**等能力全部不受影响，
+仅召回退化为关键词模式。
 
 ### 关键问题与修复
-| # | 问题 | 定位过程 | 修复 |
-| --- | --- | --- | --- |
-| 7 | 记忆措辞"用户喜欢吃东西。"过于生冷 | 抽取提示词使用第三人称 | 改为**角色第一人称温情口吻**，并在提示词中禁止出现"用户"二字，增加"已知信息不重复记录"规则 |
-| 8 | 多角色之间是否记忆串台 | 无法通过肉眼确认 | 编写仪器化测试 `MemoryIsolationTest`，证明隔离 + 级联删除 |
+
+**问题 6：记忆措辞过于生冷**
+
+- **反馈原文**：`记忆里不要是用户什么什么，太生冷了，要心与心`
+- **定位**：抽取提示词要求"使用第三人称「用户」"，导致输出如「用户喜欢吃东西。」
+- **修复**：重写抽取约束——
+  ```
+  1. 用「你」称呼对方，写成一句温柔自然的话，像是你在心里默默记住的
+  2. 绝对不能出现「用户」这两个字，也不要写成冷冰冰的资料条目
+  3. 已知的信息不要重复记录，只记这次新出现的内容
+  ```
+- **验证**：真机重新抽取输出——
+  `记得七月二十号是你的生日，是夏天里海边最舒服的时候`、
+  `知道你周末喜欢去爬山，身上总带着一股很清爽的劲儿`
+
+**问题 7：多角色之间是否记忆串台**
+
+- **反馈原文**：`多角色不要记忆错乱`
+- **应对思路**：这类问题**不能靠肉眼确认**，必须用测试固化。
+- **做法**：编写仪器化测试 `MemoryIsolationTest`
+  1. 创建两个角色各写一条记忆
+  2. 断言各自只能看到自己的记忆
+  3. 删除其中一个角色 → 断言其记忆被级联清除
+  4. 断言另一个角色的记忆不受影响
+- **结果**：`2 tests, 0 failures`
 
 ### 验证（真实测试数据）
-| 测试 | 结果 |
+
+| 项目 | 结果 |
 | --- | --- |
 | `./gradlew connectedDebugAndroidTest` | **2 tests, 0 failures** |
-| 端侧语义区分度 | `sim(爬山, 登山) = 0.85` vs `sim(爬山, 股票) = 0.39` |
-| 向量维度 / 耗时 | 512 维，3 次推理约 0.4s（真机） |
-| 端到端 | 对话后自动生成记忆：「记得七月二十号是你的生日…」「知道你周末喜欢去爬山…」 |
+| 端侧语义区分度 | `sim(爬山, 登山) = 0.8496689` vs `sim(爬山, 股票) = 0.38915947` |
+| 向量维度 / 耗时 | 512 维；3 次推理约 0.4s（真机） |
+| 端到端 | 对话后自动生成记忆并在记忆页可见 |
 
 ---
 
 ## 阶段四 · 视觉体系重构
 
 ### 目标
-从"能用"提升到"耐看"，并统一全局风格。
+从"功能可用"提升到"耐看且统一"，并补齐关键交互缺失。
 
-### 关键定位
-用户反馈"UI 没有全局统一" → 排查发现根因是 **Material You 动态取色**：
-系统按壁纸生成配色，与品牌紫互相打架。
+### 关键定位：为什么"UI 不统一"
 
-### 产出
+**反馈原文**：`还是不好看啊，而且 UI 没有全局统一`
+
+- **排查**：主题开启了 **Material You 动态取色**（`dynamicColor = true`），
+  系统按壁纸生成一套配色，与品牌紫渐变**同时存在**，导致同一界面出现两套色彩体系。
+- **修复**：关闭动态取色，改为完整定义的品牌色板（亮/暗双套），
+  并新建 `DesignSystem.kt` 固化圆角体系（10/14/18/22/28）与间距体系（4/8/12/16/20/24）。
+
+### 产出清单
+
 | 项 | 内容 |
 | --- | --- |
-| 主题 | **关闭动态取色**，定义完整品牌色板（亮/暗双套） |
-| 设计规范 | `DesignSystem.kt`：圆角体系（10/14/18/22/28）、间距体系（4/8/12/16/20/24） |
+| 主题 | 关闭动态取色；定义 primary/secondary/tertiary + 容器色 + 描边色的完整色板 |
+| 设计规范 | `DesignSystem.kt`：`IsleShapes` / `IsleSpacing` / `IsleRadius` |
 | 液态玻璃 | 接入 **Haze 2.0.1**，实现真实背景模糊（backdrop blur）+ 磨砂噪点 |
-| 首页重构 | 去掉悬浮加号 → 列表内「＋ 创建新角色」卡片；新增 Hero 卡与分组标题 |
-| 交互补全 | 聊天页右上角改为「编辑角色」；图片支持全屏查看（双指缩放/拖动） |
+| 玻璃组件 | `GlassCard`：半透明渐变填充 + 白色高光描边 + 柔和彩色投影 |
+| 首页重构 | 去掉悬浮加号按钮 → 列表内「＋ 创建新角色」卡片；新增 Hero 卡与分组标题 |
+| 交互补全 | 聊天页右上角由「设置」改为「编辑角色」；图片全屏查看（双指缩放 + 拖动） |
+| 键盘适配 | `windowSoftInputMode="adjustResize"` + 各页 `imePadding()` |
 | 合规 | 隐私文案由"仅保存在本机"改为准确表述（说明会传输至模型服务） |
 
 ### 关键问题与修复
-| # | 问题 | 定位过程 | 修复 |
-| --- | --- | --- | --- |
-| 9 | 应用内键盘唤不起来 | 用 `dumpsys input_method` 采集状态：`mInputShown=true`、`mServedView=AndroidComposeView`、IME 窗口存在 → 判定 App 侧正常；临时切换系统键盘后立刻弹出 → **确认是设备输入法问题** | App 侧仍做加固：`windowSoftInputMode="adjustResize"` + 各页 `imePadding()` |
-| 10 | Haze 2.x 无法使用 | `Module was compiled with an incompatible version of Kotlin (2.4.0 vs 2.2.0)` | **升级 Kotlin 2.3.21**（详见下条），升级后 Haze 2.0.1 直接可用 |
-| 11 | Kotlin 编译器版本受限 | AGP 9 内置 Kotlin 编译器固定 2.2.0，无法读取新库元数据 | 关闭内置 Kotlin（`android.builtInKotlin=false`）+ 关闭 AGP 新 DSL（`android.newDsl=false`），改用独立 Kotlin 插件 2.3.21；KSP 同步升至 2.3.12 |
-| 12 | 一次批量去重命令误删源码 | 使用 `awk` 全局去重导致文件内合法重复行被删 | 整文件重写修复，并在流程中禁用该手法 |
-| 13 | 首页顶部模糊过重 | 大面积高饱和渐变卡滚入顶栏后被 48dp 强模糊糊成色雾 | `blurRadius` 48→22dp、`noiseFactor` 0.14→0.06、底色 alpha 0.10→0.14 |
+
+**问题 8：应用内键盘唤不起来**
+
+- **反馈原文**：`有个严重问题点说点什么拉不起来输入法！！！`
+- **排查（用系统状态做裁判）**：
+  ```bash
+  adb shell dumpsys input_method
+  # mInputShown=true
+  # mServedView=AndroidComposeView
+  # mServedInputConnection=NullableInputConnectionWrapperApi34
+  ```
+  系统明确表示"输入法已显示且已连接"，说明 **App 侧请求链路正常**；
+  进一步临时切换系统键盘 → 键盘立刻弹出 → **判定为设备输入法配置问题**
+  （该机默认输入法被设成了微信输入法的插件服务）。
+- **App 侧仍做加固**：`adjustResize` + `imePadding()`，确保键盘弹出时输入框被顶到上方。
+
+**问题 9：液态玻璃效果不达标**
+
+- **反馈原文**：`不够透膜砂` → 之后又出现 `感觉首页上面特别模糊`
+- **过程**：先调强（`blurRadius` 48dp + `noiseFactor` 0.14 + 低不透明度），
+  首页大面积高饱和渐变卡滚入顶栏后被糊成色雾；
+  最终收敛为 `blurRadius 22dp + noiseFactor 0.06 + 底色 alpha 0.14`。
+- **教训**：玻璃效果的强度必须与"背后内容的复杂度"匹配，不能一味调参。
+
+**问题 10：Haze 2.x 无法使用（版本天花板的根治）**
+
+```
+Module was compiled with an incompatible version of Kotlin.
+The binary version of its metadata is 2.4.0, expected version is 2.2.0.
+```
+- **第一次尝试（错误方向）**：降级 Haze 到 1.7.3 —— 能编译，但只能使用旧 API，效果受限。
+- **关键转折**：提出"能否升级 Kotlin？"，随后系统评估升级路径：
+  1. 查 KSP 版本列表 → 最新为 `2.3.12`，**没有 2.4 系列**，若升到 Kotlin 2.4 会导致 Room 注解处理不可用；
+  2. 编译器版本 N 可读取 metadata 至 N+1 → **Kotlin 2.3.x 恰好可读 metadata 2.4.0**；
+  3. 结论：升到 **Kotlin 2.3.21**，既解锁 Haze 2.x，又保持 KSP 可用。
+- **升级后遇到新阻碍**：
+  ```
+  ⛔ The 'org.jetbrains.kotlin.android' plugin is not compatible with AGP's 9.0 new DSL
+     (`android.newDsl=true` is enabled by default).
+     Solution: ... set `android.newDsl=false` in gradle.properties
+  ```
+  按官方提示同时设置 `android.builtInKotlin=false` + `android.newDsl=false`，改用独立 Kotlin 插件。
+- **API 不确定性处理**：不猜测写法，直接反编译依赖 jar 取精确签名——
+  ```bash
+  javap -classpath . dev.chrisbanes.haze.blur.HazeBlurKt
+  # hazeBlur(Modifier, HazeInput, HazeBlurStyle, HazePerformanceMode, boolean)
+  ```
+  依据真实签名生成调用代码，**一次编译通过**。
+
+**问题 11：批量去重命令误删源码**
+
+- **现象**：使用 `awk '!seen[$0]++'` 去重导入语句时，该命令会删除文件中**所有**重复行
+  （包括合法的重复代码行），导致 `CharacterListScreen.kt` 结构损坏、编译报错。
+- **修复**：整文件重写恢复。
+- **流程改进**：此类"全局去重"手法此后禁止用于源码文件。
 
 ### 验证
 真机逐页截图确认：首页、聊天页、设置页、角色编辑页、技术信息页、图片查看器。
 
 ---
 
-## 阶段五 · 收尾
+## 阶段五 · 收尾与交付
 
-- 清理未使用代码与依赖（`okhttp-logging`、`ui-tooling-preview`、`room-ktx`、未使用的插件别名）
-- APK 体积优化：**185MB → 67MB**（按 CPU 架构拆分，避免 ONNX Runtime 四种架构原生库全量打包）
-- 开发者信息与项目背景文档化
+### 代码与依赖清理
+- 删除死代码：`EmbeddingProvider.NoOp`、`ContentFactory.emptyObject()`、
+  `SettingsRepository.updateMaxTokens`、`AvatarStorage.file()`、
+  `ChatRepository.observe()/clear()`、`MessageDao` 中对应的未用方法
+- 移除未使用依赖：`okhttp-logging`、`ui-tooling-preview`、`room-ktx`（Room 2.6+ 已并入 runtime）
+- 清理版本目录中未使用的插件别名
+- 结果：`compileDebugKotlin --rerun-tasks` **BUILD SUCCESSFUL，0 警告**
+
+### 体积优化
+- **问题**：ONNX Runtime 自带四种 CPU 架构的原生库，全量打包导致 APK 达 **185MB**
+- **方案**：启用 `splits.abi`，仅保留 ARM 架构并拆分产物
+- **结果**：**185MB → 67MB（arm64）/ 58MB（armv7）**
+
+### 文档交付
+- `README.md`：10 分钟极速复现指南
+- `docs/DEVELOPMENT_LOG.md`：本文件（开发全流程与问题记录）
+- `docs/TECHNICAL_REPORT.md`：意图控制策略 / 架构设计 / 可复现性论证
+- `docs/AI_COLLABORATION_LOG.md`：关键 Prompt 链还原
+- `docs/AI_CONVERSATION_EXPORT.md`：对话历史全量导出（自动生成 + 脱敏）
+
+### Git 演进记录
+按真实开发顺序拆分为细粒度提交（骨架 → 主题 → 数据层 → 网络层 → 配置 →
+提示词与仓储 → 记忆引擎 → 界面 → 玻璃视觉 → 测试 → 文档），
+**不存在一次性 `initial commit`**。
+
+---
+
+## 问题总览
+
+| # | 阶段 | 问题 | 定位手段 | 修复方式 |
+| --- | --- | --- | --- | --- |
+| 1 | 一 | AGP 9 内置 Kotlin 与独立插件冲突 | 反编译 AGP jar 查选项 | 移除独立 Kotlin 插件 |
+| 2 | 一 | 依赖拉取 TLS 握手失败 | `curl` 单独验证连通性 | 判定瞬时抖动，重试 |
+| 3 | 二 | KSP 注入 sourceSets 被拒绝 | 读取官方报错提示 | `android.disallowKotlinSourceSets=false` |
+| 4 | 二 | Kotlin 元数据版本不兼容 | `dependencyInsight` 查依赖树 | Coil 降级至 3.4.0 |
+| 5 | 二 | 聊天图片模糊 | 沿调用链回溯 | 抽出 `maxSize`，聊天图 1600px |
+| 6 | 三 | 记忆措辞生冷 | 用户反馈 + 检查抽取提示词 | 重写为第一人称温情口吻 |
+| 7 | 三 | 多角色记忆隔离 | 无法肉眼确认 → 编写测试 | `MemoryIsolationTest` 固化 |
+| 8 | 四 | 键盘唤不起来 | `dumpsys input_method` 采集状态 | 判定设备问题；App 侧加 `imePadding` |
+| 9 | 四 | 玻璃强度失衡 | 真机截图对比 | 收敛模糊半径与噪点 |
+| 10 | 四 | Haze 2.x 元数据不兼容 | 评估 KSP 生态 → 升级编译器 | Kotlin 2.3.21 + 关闭新 DSL |
+| 11 | 四 | 去重命令误删源码 | 编译报错定位 | 重写文件 + 禁用该手法 |
+| 12 | 四 | UI 不统一 | 排查主题配置 | 关闭动态取色 + 建立设计规范 |
+| 13 | 五 | APK 体积过大 | 解包统计各目录占比 | 按 CPU 架构拆分 |
 
 ---
 
@@ -165,13 +409,33 @@ Data（Room / DataStore / DeepSeek 客户端 / 仓储）
 
 本项目的开发全程采用 **Vibe Coding** 范式，核心方法是：
 
-1. **先定约束，再生成代码**：每次让 AI 生成前，先用自然语言明确"分层边界 + 数据流 + 命名规范"，
-   而不是直接说"帮我写个聊天页"。
-2. **用编译器和测试做裁判**：AI 给出的方案不靠"看起来对"，一律通过 `compileDebugKotlin`、
-   仪器化测试、真机日志（`dumpsys` / `logcat`）验证。
-3. **报错即上下文**：把完整的报错栈、依赖树（`dependencyInsight`）、反编译出的类结构
-   （`javap` 查 API 签名）回灌给 AI，让问题的定位过程可复现。
-4. **抽象层先行**：对高风险能力（端侧向量、记忆检索）先定义接口与降级路径，再替换实现，
-   保证任何一步失败都不会让应用不可用。
+### 1. 先定约束，再生成代码
+每次让 AI 生成前，先用自然语言明确"分层边界 + 数据流 + 命名规范 + 验收标准"，
+而不是直接说"帮我写个聊天页"。例：
 
-> 完整的 Prompt 链与修 Bug 过程见提交的「AI 对话历史导出」材料。
+> 写聊天页的 ViewModel。输入是 `characterId`；它从 `AppContainer` 取
+> `chatRepository` / `memoryRepository` / `deepSeekClient`；发送流程是：
+> 先落库用户消息 → 再插占位助手消息 → 流式更新 → 完成后落库并异步抽取记忆；
+> 对外暴露 StateFlow；验收标准是编译通过。
+
+### 2. 用编译器和测试做裁判
+AI 给出的方案不靠"看起来对"，一律通过下列手段验证：
+
+| 手段 | 用途 |
+| --- | --- |
+| `compileDebugKotlin --rerun-tasks` | 强制全量编译，杜绝增量缓存的假通过 |
+| `connectedDebugAndroidTest` | 端侧向量语义区分度、多角色记忆隔离 |
+| `dependencyInsight` | 定位依赖冲突的真实来源 |
+| `dumpsys input_method` / `logcat` | 区分"App 问题"与"设备问题" |
+| `javap` 反编译依赖 jar | 在 API 不确定时直接从字节码确认方法签名 |
+
+### 3. 报错即上下文（闭环排错法）
+把**完整证据链**回灌给 AI，而不是只描述现象：
+报错原文（完整栈 + 关键行）+ 依赖树 + 环境事实（Gradle / JDK / AGP / Kotlin 版本）+ 已尝试的修复及结果。
+
+### 4. 抽象层先行
+对高风险能力（端侧向量、记忆检索、网络）先定义接口与降级路径，再替换实现，
+保证任何一步失败都不会让应用不可用。
+
+> 完整的 Prompt 链与修 Bug 过程见 `docs/AI_COLLABORATION_LOG.md` 与
+> `docs/AI_CONVERSATION_EXPORT.md`。
