@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 data class CharacterEditState(
     val id: Long = 0,
     val name: String = "",
-    val relationType: String = "love",
+    // 默认使用中性关系类型；「恋人」等亲密定位需经免责声明确认后方可选择
+    val relationType: String = "bestie",
     val personality: String = "",
     val bio: String = "",
     val speakingStyle: String = "",
