@@ -21,7 +21,10 @@ import java.io.File
  * 返回一个可调用的函数，调用后弹出选择对话框。
  */
 @Composable
-fun rememberImagePicker(onPicked: (Uri) -> Unit): () -> Unit {
+fun rememberImagePicker(
+    title: String = "选择头像来源",
+    onPicked: (Uri) -> Unit
+): () -> Unit {
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
@@ -37,7 +40,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): () -> Unit {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("选择头像来源") },
+            title = { Text(title) },
             text = { Text("从相册选择，或使用相机拍摄。") },
             confirmButton = {
                 TextButton(onClick = {

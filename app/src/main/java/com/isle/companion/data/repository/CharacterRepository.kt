@@ -13,13 +13,23 @@ class CharacterRepository(
 
     suspend fun get(id: Long): CharacterEntity? = dao.getById(id)
 
-    suspend fun save(character: CharacterEntity): Long =
-        if (character.id == 0L) {
-            dao.insert(character.copy(updatedAt = System.currentTimeMillis()))
+    suspend fun save(character: CharacterEntity): Long {
+        val now = System.currentTimeMillis()
+        return if (character.id == 0L) {
+            dao.insert(character.copy(updatedAt = now))
         } else {
-            dao.update(character.copy(updatedAt = System.currentTimeMillis()))
+            // 编辑时保留原 createdAt，否则 Room 会把整行覆盖成当前时间，
+            // 角色会从列表原位跳到末尾。
+            val existing = dao.getById(character.id)
+            dao.update(
+                character.copy(
+                    createdAt = existing?.createdAt ?: character.createdAt,
+                    updatedAt = now
+                )
+            )
             character.id
         }
+    }
 
     suspend fun delete(character: CharacterEntity) {
         avatarStorage.delete(character.avatarPath)

@@ -37,19 +37,24 @@ class TextEmbedder(context: Context) : Closeable {
         val mask = LongArray(seqLen) { 1L }
         val types = LongArray(seqLen) { 0L }
 
+        // OnnxTensor 持有 native 内存，必须显式关闭；否则每轮对话都会泄漏一点
         return runCatching {
-            val inputs = mapOf(
-                "input_ids" to OnnxTensor.createTensor(env, LongBuffer.wrap(ids), shape),
-                "attention_mask" to OnnxTensor.createTensor(env, LongBuffer.wrap(mask), shape),
-                "token_type_ids" to OnnxTensor.createTensor(env, LongBuffer.wrap(types), shape)
-            )
-            inputs.values.forEach { /* 保持引用，供 run 使用 */ }
-
-            session.run(inputs).use { result ->
-                @Suppress("UNCHECKED_CAST")
-                val output = result[0].value as Array<Array<FloatArray>>
-                val cls = output[0][0]
-                VectorMath.l2Normalize(cls)
+            OnnxTensor.createTensor(env, LongBuffer.wrap(ids), shape).use { inputIds ->
+                OnnxTensor.createTensor(env, LongBuffer.wrap(mask), shape).use { attentionMask ->
+                    OnnxTensor.createTensor(env, LongBuffer.wrap(types), shape).use { tokenTypes ->
+                        val inputs = mapOf(
+                            "input_ids" to inputIds,
+                            "attention_mask" to attentionMask,
+                            "token_type_ids" to tokenTypes
+                        )
+                        session.run(inputs).use { result ->
+                            @Suppress("UNCHECKED_CAST")
+                            val output = result[0].value as Array<Array<FloatArray>>
+                            val cls = output[0][0]
+                            VectorMath.l2Normalize(cls)
+                        }
+                    }
+                }
             }
         }.getOrNull()
     }

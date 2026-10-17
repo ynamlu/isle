@@ -99,7 +99,7 @@ fun ChatScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    val pickImage = rememberImagePicker { uri -> viewModel.attachImage(uri) }
+    val pickImage = rememberImagePicker(title = "发送图片") { uri -> viewModel.attachImage(uri) }
 
     var viewerImage by remember { mutableStateOf<String?>(null) }
     val hazeState = rememberLiquidGlassState()

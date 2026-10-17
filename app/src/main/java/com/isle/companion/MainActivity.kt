@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -12,11 +13,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.isle.companion.data.prefs.UserProfile
 import com.isle.companion.di.appContainer
 import com.isle.companion.ui.navigation.IsleNavHost
 import com.isle.companion.ui.screen.onguard.AgeGateScreen
 import com.isle.companion.ui.theme.IsleTheme
+import com.isle.companion.ui.theme.isleBackground
 import kotlinx.coroutines.launch
 
 /**
@@ -30,16 +31,24 @@ class MainActivity : ComponentActivity() {
         setContent {
             IsleTheme {
                 val container = LocalContext.current.appContainer
+                // 先区分「尚未加载」与「未确认」，避免冷启动时年龄门闪一下
                 val profile by container.userProfileRepository.profile
-                    .collectAsState(initial = UserProfile())
+                    .collectAsState(initial = null)
                 val scope = rememberCoroutineScope()
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    if (!profile.isAgeConfirmed) {
-                        AgeGateScreen(
+                    val current = profile
+                    when {
+                        current == null -> Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .isleBackground()
+                        )
+
+                        !current.isAgeConfirmed -> AgeGateScreen(
                             onConfirm = { isMinor ->
                                 scope.launch {
                                     container.userProfileRepository.setAgeGroup(
@@ -48,8 +57,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
-                    } else {
-                        IsleNavHost()
+
+                        else -> IsleNavHost()
                     }
                 }
             }

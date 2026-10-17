@@ -95,19 +95,36 @@ class MemoryExtractor(
     }
 
     private fun parse(raw: String): List<ExtractedMemory> {
-        val start = raw.indexOf('[')
-        val end = raw.lastIndexOf(']')
-        if (start < 0 || end <= start) return emptyList()
-        val jsonArray = raw.substring(start, end + 1)
+        val jsonText = extractJSON(removeThinkTags(raw)) ?: return emptyList()
         return runCatching {
             json.decodeFromString(
                 kotlinx.serialization.builtins.ListSerializer(ExtractedMemory.serializer()),
-                jsonArray
+                jsonText
             )
         }.getOrDefault(emptyList())
             .filter { it.content.isNotBlank() }
             .take(MAX_ITEMS)
             .map { it.copy(importance = it.importance.coerceIn(0f, 1f)) }
+    }
+
+    /**
+     * 清除 <think> / <thinking> / ```thinking 等思考块。
+     * 这些块里可能含方括号，会干扰后面按 [ ... ] 定位 JSON。
+     */
+    private fun removeThinkTags(text: String): String =
+        text
+            .replace(Regex("(?is)<think.*?>.*?</think.*?>"), "")
+            .replace(Regex("(?is)```think.*?```"), "")
+
+    /**
+     * 依次尝试 ```json 代码块 → 裸 JSON 数组；都没有则返回 null。
+     */
+    private fun extractJSON(text: String): String? {
+        val fenced = Regex("(?is)```(?:json)?\\s*(\\[.*?])\\s*```").find(text)
+        if (fenced != null) return fenced.groupValues[1]
+        val start = text.indexOf('[')
+        val end = text.lastIndexOf(']')
+        return if (start >= 0 && end > start) text.substring(start, end + 1) else null
     }
 
     companion object {

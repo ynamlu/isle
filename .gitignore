@@ -11,3 +11,6 @@ local.properties
 /app/build
 
 .kotlin/
+
+# 演示视频体积过大（256MB），不入库
+docs/心屿演示视频.mp4

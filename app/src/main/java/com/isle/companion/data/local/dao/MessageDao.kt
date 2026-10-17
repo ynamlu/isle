@@ -7,7 +7,7 @@ import com.isle.companion.data.local.entity.MessageEntity
 
 @Dao
 interface MessageDao {
-    @Query("SELECT * FROM messages WHERE characterId = :characterId ORDER BY timestamp DESC LIMIT :limit")
+    @Query("SELECT * FROM messages WHERE characterId = :characterId ORDER BY timestamp DESC, id DESC LIMIT :limit")
     suspend fun recent(characterId: Long, limit: Int): List<MessageEntity>
 
     @Insert

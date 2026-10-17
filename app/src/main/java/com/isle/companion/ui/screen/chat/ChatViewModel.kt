@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.sse.EventSource
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ChatViewModel(
     private val container: AppContainer,
@@ -101,14 +102,13 @@ class ChatViewModel(
 
             val history = container.chatRepository.recent(characterId, HISTORY_LIMIT)
             container.chatRepository.addUserMessage(characterId, text, imagePath)
-            container.chatRepository.addAssistantMessage(characterId)
+            // 直接用插入返回的 id 回填，避免依赖同一毫秒内的时间戳排序
+            val assistantId = container.chatRepository.addAssistantMessage(characterId)
 
             _input.value = ""
             _attachedImage.value = null
             _isStreaming.value = true
             _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
-
-            val assistantId = _messages.value.last().id
             val memories = container.memoryRepository.retrieveRelevant(characterId, text)
             val userProfile = container.userProfileRepository.profile.first()
             val conversation = PromptBuilder.buildConversation(
@@ -121,6 +121,8 @@ class ChatViewModel(
                 isMinor = userProfile.isMinor
             )
 
+            // [DONE] 与 onClosed 可能先后各触发一次，只允许结算一次
+            val finished = AtomicBoolean(false)
             var accumulated = ""
             eventSource = container.deepSeekClient.stream(
                 settings = settings,
@@ -130,6 +132,7 @@ class ChatViewModel(
                     updateAssistant(assistantId, accumulated)
                 },
                 onComplete = {
+                    if (!finished.compareAndSet(false, true)) return@stream
                     viewModelScope.launch {
                         container.chatRepository.updateContent(assistantId, accumulated)
                         _isStreaming.value = false
@@ -138,6 +141,7 @@ class ChatViewModel(
                     }
                 },
                 onError = { throwable ->
+                    if (!finished.compareAndSet(false, true)) return@stream
                     viewModelScope.launch {
                         val message = accumulated.ifBlank { "抱歉，回复失败了：${throwable.message}" }
                         container.chatRepository.updateContent(assistantId, message)
