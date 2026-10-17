@@ -17,7 +17,7 @@
 上传 TA 的模样。TA 会记得你说过的话、喜欢的东西、在意的事，在每一次聊天里带着对你的了解出现，
 像一位认识很久的朋友，而不是每次都要重新认识的陌生人。
 
-**技术上的核心差异：长期记忆完全运行在手机本地，对话内容不出设备。**
+**技术上的核心差异：长期记忆与向量检索完全在手机本地；发送消息时，对话内容会传输至你配置的模型服务。**
 
 ---
 
@@ -268,11 +268,11 @@ Isle/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的完整操作指南（15 页，含 6 张界面截图） |
-| [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [PDF](docs/技术文档-心屿.pdf) | 技术文档：意图控制策略 / 架构设计 / 可复现性论证（26 页，含 14 张图） |
+| [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的完整操作指南（18 页，含 9 张界面截图） |
+| [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [PDF](docs/技术文档-心屿.pdf) | 技术文档：意图控制策略 / 架构设计 / 可复现性论证（29 页，含 16 张图） |
 | [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md) | 开发全流程记录：五个阶段的产出与 **13 个真实问题的定位与修复** |
 | [`docs/AI_COLLABORATION_LOG.md`](docs/AI_COLLABORATION_LOG.md) | AI 协同过程：**12 条关键 Prompt 链**（含报错原文与引导过程） |
-| [`docs/AI_CONVERSATION_EXPORT.md`](docs/AI_CONVERSATION_EXPORT.md) | AI 对话历史全量导出（会话数据库自动生成，敏感信息已脱敏） |
+| [`docs/AI_CONVERSATION_EXPORT.md`](docs/AI_CONVERSATION_EXPORT.md) | AI 对话历史节选（提交版，已脱敏；非会话全量） |
 
 ---
 
@@ -280,7 +280,7 @@ Isle/
 
 | 验证维度 | 手段 | 实测结果 |
 | --- | --- | --- |
-| 编译正确性 | `compileDebugKotlin --rerun-tasks` | BUILD SUCCESSFUL，0 警告 |
+| 编译正确性 | `compileDebugKotlin --rerun-tasks` | BUILD SUCCESSFUL；Kotlin 0 警告，Gradle 有 2 条 AGP 9 迁移提示 |
 | 端侧向量有效性 | `TextEmbedderTest`（仪器化） | 相近句 0.85 / 无关句 0.39 |
 | 多角色记忆隔离 | `MemoryIsolationTest`（仪器化） | 2 tests, 0 failures |
 | 端到端对话 | 真机实测 | 人设生效、流式回复正常 |
@@ -301,7 +301,7 @@ Isle/
 | 长期记忆（含向量） | 手机本地数据库 |
 | 我的资料 / API Key | 手机本地配置 |
 
-**应用不含任何自建服务端。**
+**应用不含任何自建服务端。** 应用不参与系统云备份与换机迁移（`android:allowBackup="false"`），卸载即删除。
 
 ### 什么会联网
 
@@ -313,7 +313,7 @@ Isle/
 
 - 演示密钥通过 `local.properties` 在构建时注入，**不含在仓库中**
 - 应用内填写的密钥优先于内置演示密钥
-- 演示 APK 请勿公开分发；正式发布需改为自建后端代理
+- 演示 APK 内置的密钥可被反编译提取，请勿公开分发；赛后请在控制台停用/轮换，正式发布需改为自建后端代理
 
 ---
 
@@ -324,7 +324,7 @@ Isle/
 | 1 | `Cannot add extension with name 'kotlin'` | AGP 9 内置 Kotlin 与独立插件冲突 | 保持 `android.builtInKotlin=false` |
 | 2 | `plugin 'org.jetbrains.kotlin.android' is not compatible with AGP's 9.0 new DSL` | AGP 9 新 DSL 与独立插件不兼容 | 保持 `android.newDsl=false` |
 | 3 | `Module was compiled with an incompatible version of Kotlin` | 依赖的元数据版本高于编译器 | 本项目编译器为 2.3.21（可读 2.4.0）；若新增库仍报错则降级该库 |
-| 4 | `Using kotlin.sourceSets DSL ... is not allowed` | KSP 需注入生成源码目录 | 保持 `android.disallowKotlinSourceSets=false` |
+| 4 | `Using kotlin.sourceSets DSL ... is not allowed` | 早期 AGP 内置 Kotlin 配置下 KSP 无法注入生成目录 | 仅旧配置需要 `android.disallowKotlinSourceSets=false`；当前已改用独立 Kotlin 插件，无需该项 |
 | 5 | KSP 生成代码报 `Unresolved reference` | 增量缓存不一致 | `./gradlew clean` 后重新构建 |
 | 6 | 依赖下载卡住 / TLS 报错 | 网络不通或瞬时抖动 | 确认可访问 Google Maven 与 Maven Central；重试 |
 | 7 | 应用内键盘唤不起来 | 设备默认输入法异常（非应用问题） | 到系统设置确认默认输入法为可用键盘 |
@@ -334,10 +334,11 @@ Isle/
 
 **关键约束速查**（`gradle.properties`）：
 
+> `android.disallowKotlinSourceSets=false` 只在内置 Kotlin 方案下需要；当前配置未启用。
+
 ```properties
-android.builtInKotlin=false               # 关闭 AGP 内置 Kotlin（编译器固定 2.2.0）
+android.builtInKotlin=false               # 关闭 AGP 内置 Kotlin，改用独立 Kotlin 2.3.21
 android.newDsl=false                      # 关闭 AGP 9 新 DSL，允许独立 Kotlin 插件
-android.disallowKotlinSourceSets=false    # 允许 KSP 注入生成源码
 ```
 
 ---

@@ -31,7 +31,7 @@
 | 关键决策点 | 8 个（平台范围 / 技术栈 / 记忆方案 / 视觉体系 / 依赖升级策略等） |
 | 真实问题 | 13 个（含 4 个依赖版本天花板问题、3 个体验类根因问题） |
 | 验证手段 | 全量编译、仪器化测试、依赖树分析、系统状态采集、字节码反编译、真机截图 |
-| 交付物 | 可运行 APK + 15+ 次细粒度提交 + 4 份文档 |
+| 交付物 | 可运行 APK + 40+ 次提交（10-16 按模块整理 12 个基础提交）+ 4 份文档 |
 
 **核心协作特征**：本项目不是"让 AI 写代码然后复制粘贴"，而是
 **用自然语言定义约束 → 让 AI 生成 → 用可验证手段裁判 → 把失败证据链回灌给 AI**的闭环。
@@ -119,6 +119,7 @@ To suppress this error, set android.disallowKotlinSourceSets=false in gradle.pro
 
 **AI 处理**：读取官方报错中的 Solution，加入
 `android.disallowKotlinSourceSets=false`（AGP 9 内置 Kotlin 默认禁止外部注入 sourceSets）。
+> 该开关只在“内置 Kotlin”方案下需要；后来升级 Kotlin 2.3.21、改用独立插件后已移除。
 
 **报错 4（依赖元数据版本不兼容）**
 ```
@@ -305,7 +306,7 @@ unzip -l haze-blur-materials-2.0.1.aar | grep HazeMaterials
 ### 验证
 ```
 ./gradlew :app:compileDebugKotlin --rerun-tasks
-BUILD SUCCESSFUL in 2s（0 警告）
+BUILD SUCCESSFUL in 2s（Kotlin 0 警告）
 ```
 真机生效：内容从顶栏下方滚过时实时模糊。
 
@@ -444,7 +445,7 @@ assets           23.0 MB     ← 端侧模型
 - 未使用依赖：`okhttp-logging`、`ui-tooling-preview`、`room-ktx`
 - 版本目录中未使用的插件别名
 
-**验证**：`compileDebugKotlin --rerun-tasks` → **BUILD SUCCESSFUL，0 警告**
+**验证**：`compileDebugKotlin --rerun-tasks` → **BUILD SUCCESSFUL，Kotlin 0 警告**（Gradle 另有 2 条 AGP 9 迁移提示）
 
 ### 本轮的一次失误（如实记录）
 
@@ -502,7 +503,7 @@ assets           23.0 MB     ← 端侧模型
 
 ### 6. 官方报错往往自带解法
 
-AGP 的两处报错都直接给出了配置项（`android.disallowKotlinSourceSets=false`、
+AGP 的两处报错都直接给出了配置项（`android.disallowKotlinSourceSets=false`（后期移除）、
 `android.newDsl=false`）。**先完整读完报错再动手**，比搜索更快。
 
 ---
@@ -517,4 +518,4 @@ AGP 的两处报错都直接给出了配置项（`android.disallowKotlinSourceSe
 | 仪器化测试 | 2 个（共 2 tests, 0 failures） |
 | 端侧向量实测 | 相近句 0.85 / 无关句 0.39 |
 | 包体优化 | 185MB → 67MB（-64%） |
-| 编译告警 | 0 |
+| 编译告警 | Kotlin 0；Gradle 2 条 AGP 9 迁移提示（非错误） |

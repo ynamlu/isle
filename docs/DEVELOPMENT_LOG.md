@@ -159,6 +159,7 @@ Solution: ... set android.disallowKotlinSourceSets=false in gradle.properties.
 ```
 - **原因**：Room 依赖 KSP 生成代码，而 KSP 需要把生成目录注入 `kotlin.sourceSets`。
 - **修复**：按官方提示加入 `android.disallowKotlinSourceSets=false`。
+  （该开关只在内置 Kotlin 方案下需要；升级到独立 Kotlin 插件后已从 `gradle.properties` 移除，当前构建不再依赖它。）
 
 **问题 4：依赖的 Kotlin 元数据版本高于编译器**
 
@@ -364,7 +365,7 @@ The binary version of its metadata is 2.4.0, expected version is 2.2.0.
   `ChatRepository.observe()/clear()`、`MessageDao` 中对应的未用方法
 - 移除未使用依赖：`okhttp-logging`、`ui-tooling-preview`、`room-ktx`（Room 2.6+ 已并入 runtime）
 - 清理版本目录中未使用的插件别名
-- 结果：`compileDebugKotlin --rerun-tasks` **BUILD SUCCESSFUL，0 警告**
+- 结果：`compileDebugKotlin --rerun-tasks` **BUILD SUCCESSFUL，Kotlin 0 警告**（Gradle 仍有 2 条 AGP 9 迁移提示）
 
 ### 体积优化
 - **问题**：ONNX Runtime 自带四种 CPU 架构的原生库，全量打包导致 APK 达 **185MB**
@@ -376,12 +377,26 @@ The binary version of its metadata is 2.4.0, expected version is 2.2.0.
 - `docs/DEVELOPMENT_LOG.md`：本文件（开发全流程与问题记录）
 - `docs/TECHNICAL_REPORT.md`：意图控制策略 / 架构设计 / 可复现性论证
 - `docs/AI_COLLABORATION_LOG.md`：关键 Prompt 链还原
-- `docs/AI_CONVERSATION_EXPORT.md`：对话历史全量导出（自动生成 + 脱敏）
+- `docs/AI_CONVERSATION_EXPORT.md`：对话历史提交版节选（脱敏；完整记录在本地数据库）
 
 ### Git 演进记录
-按真实开发顺序拆分为细粒度提交（骨架 → 主题 → 数据层 → 网络层 → 配置 →
-提示词与仓储 → 记忆引擎 → 界面 → 玻璃视觉 → 测试 → 文档），
-**不存在一次性 `initial commit`**。
+为便于评审，10-16 将 10-15 的开发成果按模块整理为 12 个基础提交
+（骨架 → 主题 → 数据层 → 网络层 → 配置 → 提示词与仓储 → 记忆引擎 → 界面 →
+玻璃视觉 → 测试 → 文档），随后按真实时间继续提交文档与修复。
+**不存在一次性 `initial commit`；但前 12 个提交的时间戳是整理时间，而非每一步的实时时间。**
+
+### 交付后修复（2026-10-17，不计入前述 13 个开发期问题）
+
+| 问题 | 修复 |
+| --- | --- |
+| 冷启动时年龄门会闪一下 | 区分「配置尚未加载」与「未确认年龄」，加载完成前不渲染年龄门 |
+| 编辑角色后角色跳到列表末尾 | `CharacterRepository.save` 更新时保留原 `createdAt` |
+| 用户/助手消息同毫秒插入时排序可能错位 | `ORDER BY timestamp DESC, id DESC`；助手消息 id 直接取插入返回值 |
+| SSE 的 `[DONE]` 与 `onClosed` 可能各触发一次 | `AtomicBoolean` 保证只结算一次，避免重复抽取记忆 |
+| ONNX 输入张量未释放，长对话泄漏 native 内存 | `OnnxTensor.use { ... }` 显式关闭 |
+| 「仅保存在本机」与系统云备份矛盾 | `android:allowBackup="false"`，不参与云备份/换机迁移 |
+| 聊天页附图弹窗仍写「选择头像来源」 | 图片选择器支持标题参数，聊天页传「发送图片」 |
+| 记忆解析只看首个 `[` 与末个 `]` | 真正实现 `removeThinkTags()` + `extractJSON()`，先清除思考块/代码围栏 |
 
 ---
 
@@ -389,9 +404,9 @@ The binary version of its metadata is 2.4.0, expected version is 2.2.0.
 
 | # | 阶段 | 问题 | 定位手段 | 修复方式 |
 | --- | --- | --- | --- | --- |
-| 1 | 一 | AGP 9 内置 Kotlin 与独立插件冲突 | 反编译 AGP jar 查选项 | 移除独立 Kotlin 插件 |
+| 1 | 一 | AGP 9 内置 Kotlin 与独立插件冲突 | 反编译 AGP jar 查选项 | 首轮移除独立插件；升级 Kotlin 2.3.21 后改回独立插件 + `builtInKotlin=false` |
 | 2 | 一 | 依赖拉取 TLS 握手失败 | `curl` 单独验证连通性 | 判定瞬时抖动，重试 |
-| 3 | 二 | KSP 注入 sourceSets 被拒绝 | 读取官方报错提示 | `android.disallowKotlinSourceSets=false` |
+| 3 | 二 | KSP 注入 sourceSets 被拒绝 | 读取官方报错提示 | `android.disallowKotlinSourceSets=false`（后期已移除） |
 | 4 | 二 | Kotlin 元数据版本不兼容 | `dependencyInsight` 查依赖树 | Coil 降级至 3.4.0 |
 | 5 | 二 | 聊天图片模糊 | 沿调用链回溯 | 抽出 `maxSize`，聊天图 1600px |
 | 6 | 三 | 记忆措辞生冷 | 用户反馈 + 检查抽取提示词 | 重写为第一人称温情口吻 |

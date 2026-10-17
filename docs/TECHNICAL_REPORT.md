@@ -64,9 +64,9 @@ date: 2026 年 10 月
 
 ## 二、意图控制策略（Intent Control）
 
-![图 1 · 全量编译验证：BUILD SUCCESSFUL，0 警告](screenshots/fig1_compile.png)
+![图 1 · 全量编译验证：BUILD SUCCESSFUL（当时的构建输出）](screenshots/fig1_compile.png)
 
-*（图 1 · 全量编译验证：BUILD SUCCESSFUL，0 警告）*
+*（图 1 · 全量编译验证：BUILD SUCCESSFUL；当时输出为 0 警告，当前 Gradle 另有 2 条 AGP 9 迁移提示）*
 
 Vibe Coding 的核心风险是"AI 生成的结果看似合理却偏离意图"。本项目用四层机制约束。
 
@@ -472,14 +472,14 @@ LLM 输出常包裹在 Markdown 代码块或夹杂思考标签中。解析链路
 | 版本目录 | 全部依赖版本集中在 `gradle/libs.versions.toml`，单一可信来源 |
 | Gradle Wrapper | 随仓库分发 9.6.0，**构建不依赖本机 Gradle 安装** |
 | 配置模板化 | `local.properties` 仅需 SDK 路径（+ 可选密钥），且被 `.gitignore` 排除 |
-| 排错表 | README 第四节覆盖构建期 7 个已知坑及其解法 |
+| 排错表 | README 的常见问题排查表覆盖构建期 10 个已知坑及其解法 |
 | 无 IDE 依赖 | 全流程在命令行完成构建、安装与测试 |
 
 ### 6.2 行为可验证
 
 | 验证维度 | 手段 | 实测结果 |
 | --- | --- | --- |
-| 编译正确性 | `compileDebugKotlin --rerun-tasks` | BUILD SUCCESSFUL，0 警告 |
+| 编译正确性 | `compileDebugKotlin --rerun-tasks` | BUILD SUCCESSFUL；Kotlin 0 警告，Gradle 有 2 条 AGP 9 迁移提示 |
 | 端侧向量有效性 | `TextEmbedderTest`（仪器化） | `sim(爬山,登山)=0.85` vs `sim(爬山,股票)=0.39` |
 | 多角色记忆隔离 | `MemoryIsolationTest`（仪器化） | 2 tests, 0 failures |
 | 端到端对话 | 真机实测 | 人设生效、流式回复正常 |
@@ -489,11 +489,12 @@ LLM 输出常包裹在 Markdown 代码块或夹杂思考标签中。解析链路
 
 ### 6.3 演进路径可追溯
 
-- Git 提交按**真实开发顺序**重建：骨架 → 主题 → 数据层 → 网络层 → 配置 →
-  提示词与仓储 → 记忆引擎 → 界面 → 玻璃视觉 → 测试 → 文档，共 15+ 次提交，
-  **不存在 `initial commit` 一次性入库**
+- 共 **40+ 次提交**：10-16 将 10-15 的开发成果按模块整理为 12 个基础提交
+  （骨架 → 主题 → 数据层 → 网络层 → 配置 → 提示词与仓储 → 记忆引擎 → 界面 →
+  玻璃视觉 → 测试 → 文档），随后按真实时间继续提交文档与修复；
+  **不存在 `initial commit` 一次性入库，但前 12 个提交的时间戳为整理时间**
 - `docs/DEVELOPMENT_LOG.md` 逐条记录 **13 个真实问题**及其定位与修复过程
-- `docs/AI_CONVERSATION_EXPORT.md` 为对话数据库**自动导出**的原始记录（含工具调用轨迹）
+- `docs/AI_CONVERSATION_EXPORT.md` 为提交用**节选**（已脱敏，非会话全量；完整记录保存在本地数据库）
 
 ### 6.4 依赖风险已显式声明
 
@@ -505,7 +506,7 @@ LLM 输出常包裹在 Markdown 代码块或夹杂思考标签中。解析链路
 | Kotlin 必须 ≥ 2.3.21 | 需读取元数据 2.4.0 的依赖（Haze 2.x 等） |
 | KSP 必须与 Kotlin 生态匹配（当前 2.3.12） | KSP 无 2.4 系列，故编译器不能升到 2.4 |
 | Coil 锁定 3.4.0 | 3.5+ 要求 stdlib 2.4，超出当前编译器读取上限（若后续再升 Kotlin 可解锁） |
-| 必须 `android.disallowKotlinSourceSets=false` | KSP 生成源码需要注入 kotlin sourceSets |
+| 早期内置 Kotlin 配置需 `android.disallowKotlinSourceSets=false` | 当前已改用独立 Kotlin 插件，不再需要该项 |
 
 复现者若遇到问题，可依据 README 排错表直接定位，无需重新摸索。
 
@@ -658,7 +659,7 @@ if (isMinor) {
 | 10 分钟复现指南 | `README.md` | 已完成 |
 | 开发全流程记录 | `docs/DEVELOPMENT_LOG.md` | 已完成 |
 | 技术文档（本文件） | `docs/TECHNICAL_REPORT.md` | 已完成 |
-| 演示视频（5–8 分钟） | 待录制 | 进行中 |
+| 演示视频（5–8 分钟） | 已录制（本地，未入库） | 已完成 |
 
 ### 配图清单（排版时按序插入）
 
