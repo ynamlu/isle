@@ -596,7 +596,30 @@ assertTrue(cosine(hiking, mountain) > cosine(hiking, stock) + 0.05f)  // 语义�
 
 ### 8.2 关键实现
 
+```kotlin
+// 年龄门：未确认前不进入主界面
+if (!profile.isAgeConfirmed) {
+    AgeGateScreen(onConfirm = { isMinor ->
+        repository.setAgeGroup(if (isMinor) "minor" else "adult")
+    })
+}
 
+// 青少年模式：过滤关系类型
+val relationOptions = if (profile.isMinor) {
+    RELATION_OPTIONS.filter { it.first != "love" && it.first != "custom" }
+} else {
+    RELATION_OPTIONS
+}
+
+// 提示词：最高优先级的保护约束
+if (isMinor) {
+    appendLine("【未成年人保护要求（优先级最高）】")
+    appendLine("1. 对方是未成年人：禁止任何恋爱、暧昧、亲密关系的角色扮演。")
+    appendLine("2. 不得使用「宝贝」「亲爱的」等亲密称呼。")
+    appendLine("3. 以朋友、陪伴者、正向引导者的身份交流。")
+    appendLine("4. 若流露负面情绪或心理危机，应鼓励其向家长、老师或专业机构求助。")
+}
+```
 
 ### 8.3 能力边界（如实说明）
 
@@ -605,7 +628,7 @@ assertTrue(cosine(hiking, mountain) > cosine(hiking, stock) + 0.05f)  // 语义�
 - 接入实名认证服务（身份证二要素核验），或
 - 手机号 + 人脸识别
 
-两者均依赖服务端与合规资质，超出本地应用范围。当前实现体现的是**完整的产品设计思路与工程落地能力**；若后续接入服务端，只需在  的年龄字段写入真实核验结果，上层的分级限制逻辑无需改动。
+两者均依赖服务端与合规资质，超出本地应用范围。当前实现体现的是**完整的产品设计思路与工程落地能力**；若后续接入服务端，只需在 UserProfileRepository 的年龄字段写入真实核验结果，上层的分级限制逻辑无需改动。
 
 ---
 
