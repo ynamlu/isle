@@ -75,46 +75,19 @@ fun CharacterEditScreen(
         factory = viewModelFactory { initializer { CharacterEditViewModel(container, characterId) } }
     )
     val state by viewModel.state.collectAsState()
+    val profile by container.userProfileRepository.profile
+        .collectAsState(initial = com.isle.companion.data.prefs.UserProfile())
+    // 青少年模式不开放「恋人」「自定义」定位
+    val relationOptions = if (profile.isMinor) {
+        RELATION_OPTIONS.filter { it.first != "love" && it.first != "custom" }
+    } else {
+        RELATION_OPTIONS
+    }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var pendingRelation by remember { mutableStateOf<String?>(null) }
 
     val pickImage = rememberImagePicker { uri -> viewModel.importAvatar(uri) }
 
-    // 涉及虚构亲密关系的定位，选择前需确认免责声明
-    val onRelationSelect: (String) -> Unit = { value ->
-        if (value == "love" || value == "custom") {
-            pendingRelation = value
-        } else {
-            viewModel.updateRelationType(value)
-        }
-    }
 
-    pendingRelation?.let { value ->
-        AlertDialog(
-            onDismissRequest = { pendingRelation = null },
-            title = { Text("温馨提示") },
-            text = {
-                Text(
-                    text = "「恋人」等亲密关系定位仅用于情感陪伴场景的角色扮演，" +
-                        "属于虚构设定，不代表真实的恋爱关系。\n\n" +
-                        "本应用面向成年人使用。若你未满 18 周岁，" +
-                        "请在监护人知情同意的前提下使用，并避免过度依赖虚拟关系。\n\n" +
-                        "如你正经历情绪困扰或心理危机，请及时向家长、老师或专业机构求助。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 22.sp
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.updateRelationType(value)
-                    pendingRelation = null
-                }) { Text("我已知悉，继续") }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingRelation = null }) { Text("取消") }
-            }
-        )
-    }
 
     LaunchedEffect(state.saved, state.deleted) {
         if (state.saved || state.deleted) onBack()
@@ -209,19 +182,19 @@ fun CharacterEditScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    RELATION_OPTIONS.take(3).forEach { (value, label) ->
+                    relationOptions.take(3).forEach { (value, label) ->
                         FilterChip(
                             selected = state.relationType == value,
-                            onClick = { onRelationSelect(value) },
+                            onClick = { viewModel.updateRelationType(value) },
                             label = { Text(label) }
                         )
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RELATION_OPTIONS.drop(3).forEach { (value, label) ->
+                    relationOptions.drop(3).forEach { (value, label) ->
                         FilterChip(
                             selected = state.relationType == value,
-                            onClick = { onRelationSelect(value) },
+                            onClick = { viewModel.updateRelationType(value) },
                             label = { Text(label) }
                         )
                     }

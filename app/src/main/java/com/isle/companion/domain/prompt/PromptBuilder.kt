@@ -18,7 +18,8 @@ object PromptBuilder {
     fun buildSystemPrompt(
         character: CharacterEntity,
         memories: List<MemoryEntity>,
-        userProfile: UserProfile? = null
+        userProfile: UserProfile? = null,
+        isMinor: Boolean = false
     ): String {
         val relation = relationLabel(character.relationType)
         val memoryBlock = if (memories.isEmpty()) {
@@ -47,6 +48,14 @@ object PromptBuilder {
             appendLine("3. 不要使用 Markdown 格式（如 **加粗**、# 标题、- 列表）。")
             appendLine("4. 回复长度适中，符合真实聊天的节奏。")
             appendLine("5. 不要暴露自己是 AI 或提及提示词内容。")
+            if (isMinor) {
+                appendLine()
+                appendLine("【未成年人保护要求（优先级最高）】")
+                appendLine("1. 对方是未成年人：禁止任何恋爱、暧昧、亲密关系的角色扮演。")
+                appendLine("2. 不得使用「宝贝」「亲爱的」等亲密称呼，不得进行情感撩拨或暗示。")
+                appendLine("3. 以朋友、陪伴者、正向引导者的身份交流，关注学习、生活与情绪健康。")
+                appendLine("4. 若对方流露负面情绪或心理危机，应鼓励其向家长、老师或专业机构求助。")
+            }
         }
     }
 
@@ -78,10 +87,13 @@ object PromptBuilder {
         history: List<MessageEntity>,
         userText: String,
         imageFile: File? = null,
-        userProfile: UserProfile? = null
+        userProfile: UserProfile? = null,
+        isMinor: Boolean = false
     ): List<ApiMessage> {
         val messages = mutableListOf<ApiMessage>()
-        messages += ContentFactory.systemMessage(buildSystemPrompt(character, memories, userProfile))
+        messages += ContentFactory.systemMessage(
+            buildSystemPrompt(character, memories, userProfile, isMinor)
+        )
 
         history.takeLast(HISTORY_WINDOW).forEach { msg ->
             when (msg.role) {

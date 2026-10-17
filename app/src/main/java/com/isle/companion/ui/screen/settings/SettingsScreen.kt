@@ -120,10 +120,15 @@ fun SettingsScreen(
                     icon = Icons.Filled.Person,
                     tint = IslePurple,
                     title = "我的资料",
-                    subtitle = if (profile.isFilled) {
-                        "已填写${if (profile.name.isNotBlank()) " · ${profile.name}" else ""}"
-                    } else {
-                        "填写后所有角色都能更快了解你"
+                    subtitle = buildString {
+                        if (profile.isMinor) append("青少年模式 · ")
+                        append(
+                            if (profile.isFilled) {
+                                "已填写" + (if (profile.name.isNotBlank()) " · " + profile.name else "")
+                            } else {
+                                "填写后所有角色都能更快了解你"
+                            }
+                        )
                     },
                     onClick = onOpenUserProfile
                 )

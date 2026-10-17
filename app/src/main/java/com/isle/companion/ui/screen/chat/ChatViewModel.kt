@@ -117,7 +117,8 @@ class ChatViewModel(
                 history = history,
                 userText = text.ifBlank { "（用户发来了一张图片）" },
                 imageFile = imagePath?.let { File(it) },
-                userProfile = userProfile
+                userProfile = userProfile,
+                isMinor = userProfile.isMinor
             )
 
             var accumulated = ""
@@ -175,7 +176,8 @@ class ChatViewModel(
                 characterName = character.name,
                 userText = userText,
                 assistantText = assistantText,
-                userProfile = userProfile
+                userProfile = userProfile,
+                isMinor = userProfile.isMinor
             )
             extracted.forEach { memory ->
                 container.memoryRepository.add(

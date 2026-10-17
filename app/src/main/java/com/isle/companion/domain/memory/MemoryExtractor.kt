@@ -28,7 +28,8 @@ class MemoryExtractor(
         characterName: String,
         userText: String,
         assistantText: String,
-        userProfile: UserProfile? = null
+        userProfile: UserProfile? = null,
+        isMinor: Boolean = false
     ): List<ExtractedMemory> {
         if (userText.isBlank()) return emptyList()
 
@@ -54,6 +55,9 @@ class MemoryExtractor(
             appendLine("5. 只记明确出现的信息，不要推测。")
             appendLine("6. 没有值得记住的就返回空数组 []。")
             appendLine("7. category 取值：basic / preference / event / relationship / promise。")
+            if (isMinor) {
+                appendLine("8. 对方是未成年人：不要记录任何涉及恋爱、暧昧或亲密关系的内容。")
+            }
             appendLine()
             appendLine("示例：")
             appendLine("「记得你喜欢在周末去爬山，说起时语气都变轻快了」")
