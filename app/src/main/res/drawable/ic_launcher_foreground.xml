@@ -1,17 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.92" android:scaleY="0.92">
+
+    <!-- 心形小岛背后的暖光 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,38.5c-4.5,-6.5 -15,-7 -15,2.5c0,6.5 9,12.5 15,16.5c6,-4 15,-10 15,-16.5C69,31.5 58.5,32 54,38.5z" />
+        android:pathData="M54,38m-38,0a38,38 0,1 0,76 0a38,38 0,1 0,-76 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="38"
+                android:gradientRadius="38">
+                <item android:offset="0" android:color="#29FFD166" />
+                <item android:offset="1" android:color="#00FFD166" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 星点 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.85"
-        android:pathData="M30,66h48v4h-48z" />
+        android:fillColor="#CCFFF6DA"
+        android:pathData="M80,20m-1.1,0a1.1,1.1 0,1 0,2.2 0a1.1,1.1 0,1 0,-2.2 0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.6"
-        android:pathData="M36,74h36v3h-36z" />
+        android:fillColor="#8CFFF6DA"
+        android:pathData="M26,30m-0.8,0a0.8,0.8 0,1 0,1.6 0a0.8,0.8 0,1 0,-1.6 0" />
+    <path
+        android:fillColor="#73FFF6DA"
+        android:pathData="M86,34m-0.7,0a0.7,0.7 0,1 0,1.4 0a0.7,0.7 0,1 0,-1.4 0" />
+
+    <!-- 岛在水面的落影 -->
+    <path
+        android:fillColor="#26000000"
+        android:pathData="M54,81m-19,0a19,4 0,1 0,38 0a19,4 0,1 0,-38 0" />
+
+    <!-- 心形小岛 -->
+    <path
+        android:strokeColor="#59FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M54,79 C49,74 27,58 27,41.5 C27,31 35,25 43,28 C48,30 52,34 54,38 C56,34 60,30 65,28 C73,25 81,31 81,41.5 C81,58 59,74 54,79 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="30"
+                android:startY="30"
+                android:endX="78"
+                android:endY="80">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="1" android:color="#FFFFEBD9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 岛上的高光 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M34,38.5 C34,33.5 38,30 42.5,31" />
+
+    <!-- 新芽：从心口长出来 -->
+    <group android:pivotX="54" android:pivotY="30" android:scaleX="1.22" android:scaleY="1.22">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFC857"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M54,38 C54,33 54,30 54,26.5" />
+    <path
+        android:fillColor="#8FE3C0"
+        android:pathData="M53.5,31.5 C48.8,31.5 45.2,28.3 44.6,23.6 C49.3,23.6 52.9,26.8 53.5,31.5 Z" />
+    <path
+        android:fillColor="#8FE3C0"
+        android:pathData="M54.5,28.5 C59.2,28.5 62.8,25.3 63.4,20.6 C58.7,20.6 55.1,23.8 54.5,28.5 Z" />
+    </group>
+
+    <!-- 海面涟漪 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#8CFFFFFF"
+        android:strokeWidth="3.6"
+        android:strokeLineCap="round"
+        android:pathData="M25,83 C32,79.5 39,86.5 46,83 C53,79.5 60,86.5 67,83 C72,80.6 76,81.8 80,84" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#4DFFFFFF"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:pathData="M34,89 C40,86.4 46,91.6 52,89 C58,86.4 64,91.6 70,89" />
+    </group>
 </vector>
