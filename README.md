@@ -269,7 +269,7 @@ Isle/
 | 文档 | 内容 |
 | --- | --- |
 | [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的完整操作指南（18 页，含 9 张界面截图） |
-| [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [PDF](docs/技术文档-心屿.pdf) | 技术文档：意图控制策略 / 架构设计 / 可复现性论证（29 页，含 16 张图） |
+| [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [PDF](docs/技术文档-心屿.pdf) | 技术文档：意图控制策略 / 架构设计 / 可复现性论证（25 页，含 16 张图） |
 | [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md) | 开发全流程记录：五个阶段的产出与 **13 个真实问题的定位与修复** |
 | [`docs/AI_COLLABORATION_LOG.md`](docs/AI_COLLABORATION_LOG.md) | AI 协同过程：**9 个阶段 / 20+ 条关键 Prompt**（含报错原文与引导过程） |
 | [`docs/AI_CONVERSATION_EXPORT.md`](docs/AI_CONVERSATION_EXPORT.md) | AI 对话精编全记录：立项 → 开发 → 调试 → 成品（已脱敏） |
