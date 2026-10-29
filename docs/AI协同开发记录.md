@@ -129,7 +129,7 @@ BUILD SUCCESSFUL in 33s
 ### 方案
 
 - `CharacterEntity / MessageEntity / MemoryEntity` + 三个 DAO + `IsleDatabase`；
-- `DeepSeekClient`：Retrofit 非流式 + OkHttp SSE 流式；
+- `DeepSeekClient`（当时的实现，现已统一为 `OpenAiClient`）：Retrofit 非流式 + OkHttp SSE 流式；
 - `ContentFactory`：纯文本 / 文本 + 图片多模态；
 - `PromptBuilder`：角色卡 + 用户资料 + 召回记忆 + 最近 12 条历史。
 
