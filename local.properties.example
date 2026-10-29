@@ -26,6 +26,11 @@ AI_API_KEY=sk-你的密钥
 # AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 # AI_MODEL=qwen-plus
 # AI_API_KEY=sk-你的密钥
+
+# 千问 MaaS（OpenAI 兼容模式）
+# AI_BASE_URL=https://maas.qianwenaiapi.com/compatible-mode/v1
+# AI_MODEL=qwen-plus
+# AI_API_KEY=sk-你的密钥
 #
 # 本地 Ollama（Android 模拟器访问宿主机；真机改成电脑局域网 IP，可留空 Key）
 # AI_BASE_URL=http://10.0.2.2:11434/v1
