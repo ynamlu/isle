@@ -1,6 +1,7 @@
 package com.isle.companion.ui.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,9 +21,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -75,6 +78,8 @@ fun ModelConfigScreen(onBack: () -> Unit) {
     var maxTokensText by remember(settings.maxTokens) {
         mutableStateOf(settings.maxTokens.toString())
     }
+    var showModelPicker by remember { mutableStateOf(false) }
+    var modelQuery by remember { mutableStateOf("") }
 
     val hazeState = rememberLiquidGlassState()
 
@@ -228,14 +233,18 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                     }
                     if (models.isNotEmpty()) {
                         Spacer(Modifier.height(8.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(models) { id ->
-                                FilterChip(
-                                    selected = settings.model == id,
-                                    onClick = { viewModel.updateModel(id) },
-                                    label = { Text(id) }
-                                )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(onClick = { showModelPicker = true }) {
+                                Text("选择模型")
                             }
+                            Text(
+                                text = "当前：${settings.model}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                     modelListError?.let { message ->
@@ -292,6 +301,53 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
+    }
+
+    if (showModelPicker) {
+        val filtered = models.filter { it.contains(modelQuery.trim(), ignoreCase = true) }
+        AlertDialog(
+            onDismissRequest = { showModelPicker = false },
+            title = { Text("选择模型") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = modelQuery,
+                        onValueChange = { modelQuery = it },
+                        singleLine = true,
+                        label = { Text("搜索模型") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (filtered.isEmpty()) {
+                        Text("没有匹配的模型", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                            items(filtered) { id ->
+                                TextButton(
+                                    onClick = {
+                                        viewModel.updateModel(id)
+                                        showModelPicker = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = id,
+                                        color = if (id == settings.model) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showModelPicker = false }) { Text("关闭") }
+            }
+        )
     }
 }
 
