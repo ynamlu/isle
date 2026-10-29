@@ -29,6 +29,7 @@ android {
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // 单版本：主包名 + 内置演示 Key + 首次启动写入演示数据。
         buildConfigField("String", "DEMO_DEEPSEEK_API_KEY", "\"$demoApiKey\"")
     }
 
@@ -51,6 +52,7 @@ android {
         compose = true
         buildConfig = true
     }
+
 
     // ONNX Runtime 原生库体积较大：按 CPU 架构拆分，避免把全部架构打进同一个包。
     splits {

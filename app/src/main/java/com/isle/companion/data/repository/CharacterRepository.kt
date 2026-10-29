@@ -1,13 +1,16 @@
 package com.isle.companion.data.repository
 
 import com.isle.companion.data.local.dao.CharacterDao
+import com.isle.companion.data.local.dao.MessageDao
 import com.isle.companion.data.local.entity.CharacterEntity
 import com.isle.companion.util.AvatarStorage
 import kotlinx.coroutines.flow.Flow
+import java.io.File
 
 class CharacterRepository(
     private val dao: CharacterDao,
-    private val avatarStorage: AvatarStorage
+    private val avatarStorage: AvatarStorage,
+    private val messageDao: MessageDao
 ) {
     fun observeAll(): Flow<List<CharacterEntity>> = dao.observeAll()
 
@@ -32,6 +35,10 @@ class CharacterRepository(
     }
 
     suspend fun delete(character: CharacterEntity) {
+        // 先清理聊天图片，再删角色（消息会随外键级联删除）
+        messageDao.imagePathsByCharacter(character.id).forEach { path ->
+            runCatching { File(path).takeIf { it.exists() }?.delete() }
+        }
         avatarStorage.delete(character.avatarPath)
         dao.delete(character)
     }

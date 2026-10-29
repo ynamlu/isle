@@ -15,4 +15,19 @@ interface MessageDao {
 
     @Query("UPDATE messages SET content = :content WHERE id = :id")
     suspend fun updateContent(id: Long, content: String)
+
+    @Query("DELETE FROM messages WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM messages WHERE characterId = :characterId")
+    suspend fun deleteByCharacter(characterId: Long)
+
+    @Query("DELETE FROM messages")
+    suspend fun deleteAll()
+
+    @Query("SELECT imagePath FROM messages WHERE imagePath IS NOT NULL")
+    suspend fun allImagePaths(): List<String>
+
+    @Query("SELECT imagePath FROM messages WHERE characterId = :characterId AND imagePath IS NOT NULL")
+    suspend fun imagePathsByCharacter(characterId: Long): List<String>
 }

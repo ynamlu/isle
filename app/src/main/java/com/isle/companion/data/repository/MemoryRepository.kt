@@ -32,6 +32,23 @@ class MemoryRepository(
         }
 
         val embedding = embeddingProvider.embed(trimmed)
+        if (embedding != null) {
+            // 语义近似去重：同一件事换种说法时不重复写入，只刷新使用时间/重要性
+            val nearDuplicate = dao.allByCharacter(characterId).firstOrNull { existing ->
+                val vector = VectorMath.fromBytes(existing.embedding)
+                vector != null && VectorMath.cosine(embedding, vector) >= SEMANTIC_DUPLICATE_THRESHOLD
+            }
+            if (nearDuplicate != null) {
+                dao.update(
+                    nearDuplicate.copy(
+                        lastUsedAt = System.currentTimeMillis(),
+                        importance = maxOf(nearDuplicate.importance, importance)
+                    )
+                )
+                return
+            }
+        }
+
         dao.insert(
             MemoryEntity(
                 characterId = characterId,
@@ -89,5 +106,6 @@ class MemoryRepository(
 
     companion object {
         private const val CANDIDATE_LIMIT = 200
+        private const val SEMANTIC_DUPLICATE_THRESHOLD = 0.92f
     }
 }

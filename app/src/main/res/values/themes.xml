@@ -3,5 +3,6 @@
     <style name="Theme.Isle" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/isle_window_background</item>
     </style>
 </resources>

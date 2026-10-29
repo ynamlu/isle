@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
+import java.util.UUID
 
 /**
  * 图片选择器：支持「相册」与「拍照」两种来源。
@@ -54,7 +55,12 @@ fun rememberImagePicker(
                 TextButton(onClick = {
                     showDialog = false
                     val captureDir = File(context.cacheDir, "captures").apply { mkdirs() }
-                    val file = File(captureDir, "cap_${System.currentTimeMillis()}.jpg")
+                    // 清掉一天前的拍照缓存，避免 cacheDir 无限增长
+                    val now = System.currentTimeMillis()
+                    captureDir.listFiles()?.forEach { old ->
+                        if (now - old.lastModified() > 24 * 60 * 60 * 1000L) old.delete()
+                    }
+                    val file = File(captureDir, "cap_${UUID.randomUUID()}.jpg")
                     val uri = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.fileprovider",

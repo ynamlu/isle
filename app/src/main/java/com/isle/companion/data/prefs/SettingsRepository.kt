@@ -71,4 +71,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateModel(value: String) = context.settingsDataStore.edit { it[Keys.MODEL] = value }
 
     suspend fun updateTemperature(value: Double) = context.settingsDataStore.edit { it[Keys.TEMPERATURE] = value }
+
+    suspend fun updateMaxTokens(value: Int) =
+        context.settingsDataStore.edit { it[Keys.MAX_TOKENS] = value.coerceIn(128, 8192) }
 }

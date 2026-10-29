@@ -123,15 +123,15 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 
 **③ 配置模型服务密钥（可选）**
 
-在同一个文件中追加（构建时注入为 `BuildConfig` 字段）：
+构建时会从 `local.properties` 读取演示 Key 并注入 `BuildConfig`：
 
 ```properties
 DEEPSEEK_API_KEY=sk-你的密钥
 ```
 
-- **留空也可以**——应用启动后在「设置 → 模型服务」手动填写即可
-- 优先级：**用户在应用内填写的 Key > 构建时注入的演示 Key**
-- 该文件不入库；演示用 APK 请勿公开传播
+- 留空也可以：应用启动后在「设置 → 模型服务」填写自己的 Key；
+- 优先级：**用户填写 > 构建注入的演示 Key**；
+- 该文件不入库；APK 请勿公开传播，演示结束后请轮换 Key。
 
 **④ 构建**
 
@@ -143,9 +143,11 @@ gradlew.bat assembleDebug        # Windows
 产物：
 
 ```
-app/build/outputs/apk/debug/app-arm64-v8a-debug.apk     # 现代手机（推荐）
-app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk   # 旧机型
+app/build/outputs/apk/debug/app-arm64-v8a-debug.apk      # 现代手机（推荐）
+app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk    # 旧机型
 ```
+
+当前版本包名 `com.isle.companion`，版本 `v1.0.0`。首次启动会写入 **3 个角色、6 条记忆、7 条示例消息**；可在「设置 → 重置演示数据」恢复。
 
 > 已按 CPU 架构拆分（`splits.abi`）—— ONNX Runtime 自带四套原生库，
 > 不拆分会导致包体从 67MB 膨胀到 185MB。
@@ -159,12 +161,13 @@ adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
 首次使用路径：
 
 ```
-① 打开应用 → 首页已内置角色「小屿」
+① 打开应用 → 首页预置 3 个角色（小屿 / 阿岸 / 林深）
 ② 点卡片进聊天 → 直接说话
 ③ 右上角 🧠 → 看 TA 记住了什么
 ④ 右上角 ✏️ → 改 TA 的性格与头像
 ⑤ 首页「＋ 创建新角色」→ 造一个属于你的 TA
 ⑥ 设置 →「我的资料」→ 让所有角色都认识你
+⑦ 设置 →「重置演示数据」→ 恢复初始演示状态
 ```
 
 **⑥ 运行自动化测试（可选）**
@@ -313,7 +316,7 @@ Isle/
 
 - 演示密钥通过 `local.properties` 在构建时注入，**不含在仓库中**
 - 应用内填写的密钥优先于内置演示密钥
-- 演示 APK 内置的密钥可被反编译提取，请勿公开分发；赛后请在控制台停用/轮换，正式发布需改为自建后端代理
+- APK 内置的密钥可被反编译提取，请勿公开分发；演示结束后请在控制台停用/轮换，公开分发前需改为自建后端代理
 
 ---
 

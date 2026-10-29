@@ -1,8 +1,10 @@
 package com.isle.companion.data.remote
 
+import com.isle.companion.data.remote.dto.BalanceResponse
 import com.isle.companion.data.remote.dto.ChatCompletionRequest
 import com.isle.companion.data.remote.dto.ChatCompletionResponse
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Url
@@ -19,4 +21,10 @@ interface DeepSeekApi {
         @Header("Authorization") authorization: String,
         @Body request: ChatCompletionRequest
     ): ChatCompletionResponse
+
+    @GET
+    suspend fun balance(
+        @Url url: String,
+        @Header("Authorization") authorization: String
+    ): BalanceResponse
 }

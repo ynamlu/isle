@@ -15,11 +15,6 @@ class CharacterListViewModel(private val container: AppContainer) : ViewModel() 
         container.characterRepository.observeAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    init {
-        viewModelScope.launch {
-            container.characterRepository.ensureDefaultCharacter()
-        }
-    }
 
     fun delete(character: CharacterEntity) {
         viewModelScope.launch {

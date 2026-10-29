@@ -1,6 +1,8 @@
 package com.isle.companion.ui.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -58,7 +62,12 @@ fun ModelConfigScreen(onBack: () -> Unit) {
         factory = viewModelFactory { initializer { SettingsViewModel(container) } }
     )
     val settings by viewModel.settings.collectAsState()
+    val testing by viewModel.testing.collectAsState()
+    val testMessage by viewModel.testMessage.collectAsState()
     var apiKeyVisible by remember { mutableStateOf(false) }
+    var maxTokensText by remember(settings.maxTokens) {
+        mutableStateOf(settings.maxTokens.toString())
+    }
 
     val hazeState = rememberLiquidGlassState()
 
@@ -148,6 +157,24 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        shape = IsleRadius.field,
+                        value = maxTokensText,
+                        onValueChange = { raw ->
+                            val digits = raw.filter { it.isDigit() }.take(4)
+                            maxTokensText = digits
+                            digits.toIntOrNull()?.let { value ->
+                                if (value in 128..8192) viewModel.updateMaxTokens(value)
+                            }
+                        },
+                        label = { Text("最大回复 tokens") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
                     Spacer(Modifier.height(8.dp))
 
                     Text(
@@ -155,6 +182,33 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = viewModel::testConnection,
+                            enabled = !testing
+                        ) {
+                            Text(if (testing) "测试中…" else "测试连接")
+                        }
+                    }
+
+                    testMessage?.let { message ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (message.startsWith("连接正常")) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            }
+                        )
+                    }
 
                     if (settings.usingDemoKey) {
                         Spacer(Modifier.height(10.dp))

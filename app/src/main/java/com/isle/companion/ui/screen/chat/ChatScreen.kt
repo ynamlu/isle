@@ -26,8 +26,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,15 +39,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,24 +109,62 @@ fun ChatScreen(
     val pickImage = rememberImagePicker(title = "发送图片") { uri -> viewModel.attachImage(uri) }
 
     var viewerImage by remember { mutableStateOf<String?>(null) }
+    var showClearDialog by remember { mutableStateOf(false) }
     val hazeState = rememberLiquidGlassState()
 
     val accent = relationColor(character?.relationType ?: "custom")
 
     LaunchedEffect(error) {
         error?.let {
-            snackbarHostState.showSnackbar(it)
+            val result = snackbarHostState.showSnackbar(
+                message = it,
+                actionLabel = "重试",
+                withDismissAction = true,
+                duration = SnackbarDuration.Long
+            )
             viewModel.dismissError()
+            if (result == SnackbarResult.ActionPerformed) viewModel.retryLast()
         }
     }
 
-    LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
+    // 只有用户本来就在底部时才跟随流式输出，避免把正在上滑看历史的人强行拉回
+    val shouldFollow by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                ?: messages.lastIndex
+            messages.isEmpty() || lastVisible >= messages.lastIndex - 1
+        }
+    }
+    LaunchedEffect(messages.size) {
+        // 新增消息（用户发送 / 助手占位）时总是滚到底部
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.lastIndex)
         }
     }
+    LaunchedEffect(messages.lastOrNull()?.content) {
+        if (isStreaming && shouldFollow && messages.isNotEmpty()) {
+            listState.scrollToItem(messages.lastIndex)
+        }
+    }
 
     ImageViewerDialog(imagePath = viewerImage, onDismiss = { viewerImage = null })
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("清空会话") },
+            text = { Text("将删除当前角色的全部聊天记录和图片，且无法恢复。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showClearDialog = false
+                    viewModel.clearChat()
+                }) { Text("清空") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text("取消") }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -160,6 +205,9 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showClearDialog = true }) {
+                        Icon(Icons.Filled.DeleteSweep, contentDescription = "清空会话")
+                    }
                     IconButton(onClick = onOpenMemory) {
                         Icon(Icons.Filled.Psychology, contentDescription = "长期记忆")
                     }
@@ -261,32 +309,49 @@ fun ChatScreen(
 
                     Spacer(Modifier.width(8.dp))
 
-                    val canSend = !isStreaming && (input.isNotBlank() || attachedImage != null)
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (canSend) {
-                                    IsleUserBubbleBrush
+                    if (isStreaming) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { viewModel.stopStreaming() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Stop,
+                                contentDescription = "停止生成",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        val canSend = input.isNotBlank() || attachedImage != null
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (canSend) {
+                                        IsleUserBubbleBrush
+                                    } else {
+                                        androidx.compose.ui.graphics.SolidColor(
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                    }
+                                )
+                                .clickable(enabled = canSend) { viewModel.send() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "发送",
+                                tint = if (canSend) {
+                                    Color.White
                                 } else {
-                                    androidx.compose.ui.graphics.SolidColor(
-                                        MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                             )
-                            .clickable(enabled = canSend) { viewModel.send() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "发送",
-                            tint = if (canSend) {
-                                Color.White
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
+                        }
                     }
                 }
             }

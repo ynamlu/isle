@@ -1,6 +1,7 @@
 package com.isle.companion.di
 
 import android.content.Context
+import com.isle.companion.data.demo.DemoDataSeeder
 import com.isle.companion.data.local.IsleDatabase
 import com.isle.companion.data.prefs.SettingsRepository
 import com.isle.companion.data.prefs.UserProfileRepository
@@ -56,9 +57,19 @@ class AppContainer(context: Context) {
     val userProfileRepository = UserProfileRepository(appContext)
     val avatarStorage = AvatarStorage(appContext)
     val deepSeekClient = DeepSeekClient(json, okHttpClient, deepSeekApi)
-    val characterRepository = CharacterRepository(database.characterDao(), avatarStorage)
+    val characterRepository = CharacterRepository(database.characterDao(), avatarStorage, database.messageDao())
     val chatRepository = ChatRepository(database.messageDao())
     val embeddingProvider: EmbeddingProvider = OnnxEmbeddingProvider(appContext)
     val memoryRepository = MemoryRepository(database.memoryDao(), embeddingProvider)
     val memoryExtractor = MemoryExtractor(json, deepSeekClient)
+
+    val demoDataSeeder = DemoDataSeeder(
+        context = appContext,
+        characterDao = database.characterDao(),
+        messageDao = database.messageDao(),
+        memoryDao = database.memoryDao(),
+        characterRepository = characterRepository,
+        chatRepository = chatRepository,
+        memoryRepository = memoryRepository
+    )
 }

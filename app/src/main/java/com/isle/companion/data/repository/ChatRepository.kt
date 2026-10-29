@@ -28,4 +28,10 @@ class ChatRepository(private val dao: MessageDao) {
         )
 
     suspend fun updateContent(id: Long, content: String) = dao.updateContent(id, content)
+
+    suspend fun deleteMessage(id: Long) = dao.deleteById(id)
+
+    suspend fun clear(characterId: Long) = dao.deleteByCharacter(characterId)
+
+    suspend fun imagePaths(characterId: Long): List<String> = dao.imagePathsByCharacter(characterId)
 }

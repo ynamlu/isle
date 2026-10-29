@@ -19,6 +19,9 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE characterId = :characterId AND content = :content LIMIT 1")
     suspend fun findByContent(characterId: Long, content: String): MemoryEntity?
 
+    @Query("SELECT * FROM memories WHERE characterId = :characterId")
+    suspend fun allByCharacter(characterId: Long): List<MemoryEntity>
+
     @Insert
     suspend fun insert(memory: MemoryEntity): Long
 
@@ -30,4 +33,7 @@ interface MemoryDao {
 
     @Query("DELETE FROM memories WHERE characterId = :characterId")
     suspend fun clearByCharacter(characterId: Long)
+
+    @Query("DELETE FROM memories")
+    suspend fun deleteAll()
 }
