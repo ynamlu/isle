@@ -240,7 +240,7 @@ Data 层              Repository + Room(3 表) + DataStore + OpenAiClient（Open
 `OpenAiUrls`（地址归一化）/ `OpenAiClient`（鉴权、探活、流式）/ `OpenAiStreamParser`（SSE 解析）组成。
 `local.properties` 只负责提供构建期默认值，应用内设置始终优先；本地/局域网 HTTP 服务也可直接连接。
 
-设置页支持**快速切换服务**（OpenAI / DeepSeek / 通义千问 / 千问 MaaS / 本地 Ollama）与**获取模型列表**：拉到 `/models` 后直接点选模型即可切换，无需手动输入 ID。千问 MaaS 预设默认使用 `qwen3.5-omni-plus`。
+设置页支持**快速切换服务**（OpenAI / DeepSeek / 通义千问 / 千问 MaaS / 本地 Ollama）与**获取模型列表**：拉到 `/models` 后可打开**可搜索列表**点选模型，无需手动输入 ID。千问 MaaS 预设默认使用 `qwen3.5-omni-plus`。
 
 ---
 

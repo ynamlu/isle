@@ -124,7 +124,7 @@ BUILD SUCCESSFUL in 33s
 ### 意图（整理）
 
 > 实现本地数据层：角色、消息、记忆三张表；记忆表预留 `embedding` 二进制列；删除角色时级联清除会话与记忆。
-> 网络层使用 DeepSeek 的 OpenAI 兼容接口：地址可在应用内修改，支持 SSE 流式与主动取消，支持图片 base64 内联，DTO 兼容 `reasoning_content`。
+> 网络层统一为 OpenAI 兼容协议：地址 / 模型 / Key 均可在应用内修改，支持 SSE 流式与主动取消、图片 base64 内联，DTO 兼容 `reasoning_content`；默认接入 DeepSeek，也可切换 OpenAI、通义千问 / 千问 MaaS 或本地服务。
 
 ### 方案
 
@@ -610,6 +610,22 @@ BUILD SUCCESSFUL
 **验证**：`assembleDebug` 通过；演示数据 3/6/7；设置页测试连接返回余额；重置演示数据恢复 3/6/7；年龄分组可回到年龄门；覆盖安装验证过 v1→v2 迁移。
 
 **收口结果**：单版本，`com.isle.companion`，v1.0.0，arm64 68MB。
+
+---
+
+## 迭代十 · 模型服务通用化（10-29）
+
+> 从「只接 DeepSeek」改为「任意 OpenAI 兼容服务」，并让模型可以在设置页直接切换。
+
+| 改造 | 结果 |
+| --- | --- |
+| 协议层 | 删除 DeepSeek 专用客户端，统一为 `OpenAiClient` + `OpenAiUrls` + SSE/错误解析 |
+| 配置 | `local.properties` 支持 `AI_BASE_URL` / `AI_MODEL` / `AI_API_KEY`，兼容 `OPENAI_*` 与旧 `DEEPSEEK_API_KEY` |
+| 运行时 | 地址 / 模型 / Key 可在设置页随时覆盖；支持本地 / 局域网 `http://`，本地服务 Key 可留空 |
+| 模型切换 | 设置页提供 OpenAI / DeepSeek / 通义千问 / 千问 MaaS / 本地 Ollama 预设；`GET /models` 后可在可搜索列表中点选 |
+| 模拟器兼容 | 模拟器缺少 ARM64 指令时，端侧向量自动降级为关键词匹配，不再启动崩溃 |
+
+**验证**：33 个 JVM 单测 + 3 个真实 E2E（`-Disle.e2e=1`）全部通过；千问 MaaS `qwen3.5-omni-plus` 实测 `/models` 返回 184 个模型，非流式与流式均正常；`scripts/verify-ai-connection.sh` 三步全过。
 
 ---
 
