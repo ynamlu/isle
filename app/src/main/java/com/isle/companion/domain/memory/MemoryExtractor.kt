@@ -1,9 +1,9 @@
 package com.isle.companion.domain.memory
 
-import com.isle.companion.data.prefs.DeepSeekSettings
+import com.isle.companion.data.prefs.AiSettings
 import com.isle.companion.data.prefs.UserProfile
 import com.isle.companion.data.remote.ContentFactory
-import com.isle.companion.data.remote.DeepSeekClient
+import com.isle.companion.data.remote.OpenAiClient
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
  */
 class MemoryExtractor(
     private val json: Json,
-    private val client: DeepSeekClient
+    private val client: OpenAiClient
 ) {
 
     @Serializable
@@ -24,7 +24,7 @@ class MemoryExtractor(
     )
 
     suspend fun extract(
-        settings: DeepSeekSettings,
+        settings: AiSettings,
         characterName: String,
         userText: String,
         assistantText: String,

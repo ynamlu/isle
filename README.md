@@ -121,16 +121,24 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 # sdk.dir=/home/你的用户名/Android/Sdk
 ```
 
-**③ 配置模型服务密钥（可选）**
+**③ 配置模型服务（可选，OpenAI 兼容协议）**
 
-构建时会从 `local.properties` 读取演示 Key 并注入 `BuildConfig`：
+应用不绑定任何厂商：只要服务实现了 OpenAI 的 `/chat/completions` 协议即可，
+如 OpenAI、DeepSeek、通义千问、Moonshot，以及本地 Ollama / LM Studio / vLLM。
+
+在 `local.properties` 中填写（可参考仓库内的 `local.properties.example`；构建时注入 `BuildConfig`，三项均可留空）：
 
 ```properties
-DEEPSEEK_API_KEY=sk-你的密钥
+AI_BASE_URL=https://api.deepseek.com/v1
+AI_MODEL=deepseek-chat
+AI_API_KEY=sk-你的密钥
 ```
 
-- 留空也可以：应用启动后在「设置 → 模型服务」填写自己的 Key；
-- 优先级：**用户填写 > 构建注入的演示 Key**；
+- 也可留空：应用启动后在「设置 → 模型服务」中填写自己的地址 / 模型 / Key；
+- 优先级：**应用内填写 > local.properties 注入 > 通用默认值**（`https://api.openai.com/v1` + `gpt-4o-mini`）；
+- `AI_BASE_URL` 填到 `/v1` 即可，也支持直接粘贴完整的 `.../chat/completions` 地址；
+- 本地/局域网服务可用 `http://`（模拟器访问宿主机为 `http://10.0.2.2:11434/v1`），通常无需 API Key；
+- 旧配置键 `DEEPSEEK_API_KEY` 仍然兼容：只填它时会自动补齐 DeepSeek 的地址与模型；
 - 该文件不入库；APK 请勿公开传播，演示结束后请轮换 Key。
 
 **④ 构建**
@@ -173,12 +181,24 @@ adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
 **⑥ 运行自动化测试（可选）**
 
 ```bash
-./gradlew connectedDebugAndroidTest   # 需连接真机或 ARM 模拟器
+./gradlew :app:testDebugUnitTest          # JVM 单元测试：地址拼接 / SSE 解析 / 配置回退 / DTO
+./gradlew connectedDebugAndroidTest       # 仪器化测试：记忆隔离可跑模拟器，ONNX 向量测试需真机
+
+# 真实接口端到端测试：读取 local.properties 的地址 / 模型 / Key，
+# 依次验证「连接探活 → 非流式补全 → 流式 SSE」（默认跳过，需显式开启）
+./gradlew :app:testDebugUnitTest --tests '*OpenAiClientE2eTest*' -Disle.e2e=1
+
+# 不跑 Gradle 的快速自检脚本（curl 版，同样读取 local.properties）
+./scripts/verify-ai-connection.sh
 ```
 
 | 测试 | 验证内容 | 实测结果 |
 | --- | --- | --- |
-| `TextEmbedderTest` | 端侧向量的语义区分度 | `sim(爬山,登山)=0.85` vs `sim(爬山,股票)=0.39` |
+| `OpenAiUrlsTest` | Base URL / 完整接口 / 本地地址归一化 | 12 cases |
+| `OpenAiStreamParserTest` / `OpenAiErrorParserTest` | SSE 正文、[DONE]、错误体解析 | 12 cases |
+| `AiSettingsTest` / `ChatDtosTest` | 配置回退优先级、OpenAI 请求/响应字段 | 9 cases |
+| `OpenAiClientE2eTest` | 真实接口：探活 + 非流式 + 流式 | 3 tests, 0 failures |
+| `TextEmbedderTest` | 端侧向量的语义区分度（模拟器自动跳过） | 真机：`sim(爬山,登山)=0.85` vs `sim(爬山,股票)=0.39` |
 | `MemoryIsolationTest` | 多角色记忆隔离 + 级联删除 | 2 tests, 0 failures |
 
 ---
@@ -192,7 +212,7 @@ adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
 ```
 UI 层（Compose）     Screen（无状态） ←→ ViewModel（StateFlow 单向数据流）
 Domain 层            PromptBuilder / MemoryExtractor / 端侧向量引擎
-Data 层              Repository + Room(3 表) + DataStore + DeepSeekClient
+Data 层              Repository + Room(3 表) + DataStore + OpenAiClient（OpenAI 兼容）
 基础设施              AppContainer（手写依赖容器）· AvatarStorage（图片分级压缩）
 ```
 
@@ -214,6 +234,14 @@ Data 层              Repository + Room(3 表) + DataStore + DeepSeekClient
 先把检索抽象为 `EmbeddingProvider` 接口，再接 ONNX 实现——**模型加载失败自动降级为关键词匹配**，
 保证任何一步失败都不会让应用不可用。
 
+### 模型服务接入（OpenAI 通用协议）
+
+网络层不绑定任何厂商：地址、模型 ID、API Key 三者均可运行时配置，统一由
+`OpenAiUrls`（地址归一化）/ `OpenAiClient`（鉴权、探活、流式）/ `OpenAiStreamParser`（SSE 解析）组成。
+`local.properties` 只负责提供构建期默认值，应用内设置始终优先；本地/局域网 HTTP 服务也可直接连接。
+
+设置页支持**快速切换服务**（OpenAI / DeepSeek / 通义千问 / 本地 Ollama）与**获取模型列表**：拉到 `/models` 后直接点选模型即可切换，无需手动输入 ID。
+
 ---
 
 ## 技术栈
@@ -228,6 +256,7 @@ Data 层              Repository + Room(3 表) + DataStore + DeepSeekClient
 | 本地数据库 | Room | 2.8.5 |
 | 键值配置 | DataStore Preferences | 1.2.1 |
 | 网络 | Retrofit / OkHttp / okhttp-sse | 3.0.0 / 5.5.0 |
+| 模型服务 | OpenAI 兼容协议（厂商无关，可接本地服务） | — |
 | 序列化 | kotlinx.serialization | 1.11.0 |
 | 端侧推理 | ONNX Runtime Android | 1.31.0 |
 | 端侧模型 | bge-small-zh-v1.5（int8） | 512 维 / 23.9MB |
@@ -246,7 +275,7 @@ Isle/
 │   │   ├── data/
 │   │   │   ├── local/                       # Room：实体 / DAO / 数据库
 │   │   │   ├── prefs/                       # DataStore：模型配置 / 用户资料
-│   │   │   ├── remote/                      # DeepSeek 客户端 / DTO / 多模态工厂
+│   │   │   ├── remote/                      # OpenAI 兼容客户端 / URL 工具 / DTO / 多模态工厂
 │   │   │   └── repository/                  # 角色 / 会话 / 记忆 仓储
 │   │   ├── domain/
 │   │   │   ├── memory/                      # 分词器 / 向量推理 / 记忆抽取
@@ -271,7 +300,7 @@ Isle/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的完整操作指南（16 页，含 9 张界面截图） |
+| [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的完整操作指南（17 页，含 9 张界面截图） |
 | [`docs/技术文档.md`](docs/技术文档.md) · [PDF](docs/技术文档-心屿.pdf) | 技术文档：意图控制策略 / 架构设计 / 可复现性论证（22 页，含 16 张图） |
 | [`docs/开发全流程记录.md`](docs/开发全流程记录.md) | 开发全流程记录：五个阶段的产出与 **13 个真实问题的定位与修复** |
 | [`docs/AI协同开发记录.md`](docs/AI协同开发记录.md) | AI 协同过程：**10 个阶段 / 20+ 条关键 Prompt**（含报错原文与引导过程） |
@@ -284,12 +313,14 @@ Isle/
 | 验证维度 | 手段 | 实测结果 |
 | --- | --- | --- |
 | 编译正确性 | `compileDebugKotlin --rerun-tasks` | BUILD SUCCESSFUL；Kotlin 0 警告，Gradle 有 2 条 AGP 9 迁移提示 |
+| 模型服务协议 | `OpenAiUrlsTest` / `OpenAiStreamParserTest` / `ChatDtosTest`（JVM） | 33 tests, 0 failures（E2E 默认跳过） |
+| 真实接口链路 | `OpenAiClientE2eTest` + `scripts/verify-ai-connection.sh` | 探活 / 非流式 / 流式全部通过（DeepSeek flash） |
 | 端侧向量有效性 | `TextEmbedderTest`（仪器化） | 相近句 0.85 / 无关句 0.39 |
 | 多角色记忆隔离 | `MemoryIsolationTest`（仪器化） | 2 tests, 0 failures |
 | 端到端对话 | 真机实测 | 人设生效、流式回复正常 |
 | 图片多模态 | 真机实测 | AI 准确描述上传的截图内容 |
 | 记忆抽取 | 真机实测 | 自动生成温情口吻记忆并在记忆页可见 |
-| 包体 | 解包统计 | 67MB（arm64） |
+| 包体 | 解包统计 | 68MB（arm64，本机实测） |
 
 ---
 
@@ -308,14 +339,14 @@ Isle/
 
 ### 什么会联网
 
-仅在发送消息时：**对话内容与「我的资料」会传输至你配置的模型服务**（默认 DeepSeek）用于生成回复。
+仅在发送消息时：**对话内容与「我的资料」会传输至你配置的模型服务**（地址 / 模型由你配置）用于生成回复。
 
 **端侧语义向量（记忆检索）完全离线**，不产生任何网络请求。
 
 ### 密钥安全
 
-- 演示密钥通过 `local.properties` 在构建时注入，**不含在仓库中**
-- 应用内填写的密钥优先于内置演示密钥
+- 内置密钥通过 `local.properties` 在构建时注入，**不含在仓库中**
+- 应用内填写的地址 / 模型 / 密钥优先于内置配置
 - APK 内置的密钥可被反编译提取，请勿公开分发；演示结束后请在控制台停用/轮换，公开分发前需改为自建后端代理
 
 ---
@@ -334,6 +365,10 @@ Isle/
 | 8 | 图片发送后点开模糊 | 早期版本聊天图按 512px 保存 | 已修复（现为 1600px）；旧图重新发送即可 |
 | 9 | APK 体积异常大 | 未按架构拆分 | 确认 `splits.abi` 生效，安装对应架构的 APK |
 | 10 | 构建成功但修改未生效 | Gradle 增量缓存 | 使用 `--rerun-tasks` 强制全量 |
+| 11 | 「测试连接」提示 404 | 服务未实现 `/models`，或 API 地址多了/少了 `/v1` | 客户端会自动回退到 1 token 对话探活；仍失败时检查地址能否直接访问 `.../chat/completions` |
+| 12 | 本地 Ollama / LM Studio 连不上 | Android 默认禁止明文 HTTP，或地址填了 `localhost` | 应用已允许 `http://`；模拟器访问宿主机用 `http://10.0.2.2:11434/v1`，真机用电脑局域网 IP |
+| 13 | 模型回复为空或截断 | 推理型模型把 token 花在 `reasoning_content` 上 | 调大「最大回复 tokens」（默认 2048），或换用非推理模型 |
+| 14 | 模拟器上「长期记忆」语义召回变弱 | QEMU 缺少 ONNX Runtime 所需 ARM64 指令（native SIGILL 无法捕获） | 已自动降级为关键词匹配，应用不会崩溃；完整向量能力请在真机验证 |
 
 **关键约束速查**（`gradle.properties`）：
 

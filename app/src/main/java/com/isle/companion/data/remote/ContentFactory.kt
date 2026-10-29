@@ -9,7 +9,7 @@ import kotlinx.serialization.json.buildJsonObject
 import java.io.File
 
 /**
- * 构造 DeepSeek 消息内容，支持纯文本与「文本 + 图片」多模态。
+ * 构造 OpenAI 兼容协议的消息内容，支持纯文本与「文本 + 图片」多模态。
  */
 object ContentFactory {
 

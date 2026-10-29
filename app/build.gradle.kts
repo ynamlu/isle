@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.kotlin.android)
@@ -8,14 +9,44 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// 从 local.properties 读取演示用密钥（该文件不入版本库）。
-// 构建时注入为 BuildConfig 字段，用户仍可在设置页用自己的 Key 覆盖。
-val demoApiKey: String = runCatching {
-    val props = Properties()
+// 从 local.properties 读取模型服务配置（该文件不入版本库）。
+// 支持任意 OpenAI 兼容协议的服务：API 地址 + 模型 ID + API Key。
+// 构建时注入为 BuildConfig 字段，用户仍可在设置页用自己的配置覆盖。
+val localProps: Properties = Properties().apply {
     val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { props.load(it) }
-    props.getProperty("DEEPSEEK_API_KEY", "")
-}.getOrDefault("")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun localProp(vararg names: String): String = names.firstNotNullOfOrNull { name ->
+    localProps.getProperty(name)?.trim()?.takeIf { it.isNotEmpty() }
+} ?: ""
+
+// 兼容历史配置：只填了 DEEPSEEK_API_KEY 时，自动补齐 DeepSeek 的地址与模型。
+val explicitKey = localProp("AI_API_KEY", "OPENAI_API_KEY")
+val legacyDeepSeekKey = localProp("DEEPSEEK_API_KEY")
+val legacyDeepSeekMode = explicitKey.isEmpty() && legacyDeepSeekKey.isNotEmpty()
+
+val aiApiKey = explicitKey.ifEmpty { legacyDeepSeekKey }
+val aiBaseUrl = localProp("AI_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE")
+    .ifEmpty { if (legacyDeepSeekMode) "https://api.deepseek.com/v1" else "" }
+val aiModel = localProp("AI_MODEL", "OPENAI_MODEL", "AI_MODEL_ID")
+    .ifEmpty { if (legacyDeepSeekMode) "deepseek-flash" else "" }
+
+/** 转义为 BuildConfig（Java 源码）中的字符串字面量，避免地址/Key 中的特殊字符破坏生成。 */
+fun buildConfigStringLiteral(value: String): String = buildString {
+    append('"')
+    value.forEach { ch ->
+        when (ch) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(ch)
+        }
+    }
+    append('"')
+}
 
 android {
     namespace = "com.isle.companion"
@@ -29,8 +60,10 @@ android {
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // 单版本：主包名 + 内置演示 Key + 首次启动写入演示数据。
-        buildConfigField("String", "DEMO_DEEPSEEK_API_KEY", "\"$demoApiKey\"")
+        // 内置模型服务配置：未留空时作为应用默认值，用户可在设置页覆盖。
+        buildConfigField("String", "DEMO_AI_BASE_URL", buildConfigStringLiteral(aiBaseUrl))
+        buildConfigField("String", "DEMO_AI_MODEL", buildConfigStringLiteral(aiModel))
+        buildConfigField("String", "DEMO_AI_API_KEY", buildConfigStringLiteral(aiApiKey))
     }
 
     buildTypes {
@@ -68,6 +101,13 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+// 真实接口端到端测试默认跳过；用 -Disle.e2e=1 显式开启（避免 CI/离线环境误联网）。
+tasks.withType<Test>().configureEach {
+    if (providers.systemProperty("isle.e2e").orElse("").get() == "1") {
+        systemProperty("isle.e2e", "1")
     }
 }
 
@@ -111,6 +151,9 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     debugImplementation(libs.androidx.ui.tooling)
+
+    // JVM 单元测试（地址拼接 / SSE 解析 / 配置回退等纯逻辑）
+    testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)

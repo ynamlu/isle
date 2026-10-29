@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * DeepSeek（OpenAI 兼容）对话请求体。
+ * OpenAI 兼容协议的对话请求体。
  */
 @Serializable
 data class ChatCompletionRequest(

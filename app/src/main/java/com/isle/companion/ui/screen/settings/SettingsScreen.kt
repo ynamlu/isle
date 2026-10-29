@@ -169,8 +169,8 @@ fun SettingsScreen(
                     tint = IsleBlue,
                     title = "模型服务",
                     subtitle = when {
-                        settings.usingDemoKey -> "已内置演示密钥 · ${settings.model}"
-                        settings.isConfigured -> "已配置 · ${settings.model}"
+                        settings.usingBuiltInKey -> "内置配置 · ${settings.effectiveModel}"
+                        settings.isConfigured -> "已配置 · ${settings.effectiveModel}"
                         else -> "未配置，点击填写 API Key"
                     },
                     onClick = onOpenModelConfig

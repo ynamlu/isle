@@ -1,0 +1,33 @@
+# 复制本文件为 local.properties 后按本机情况修改（local.properties 已被 .gitignore 排除）。
+
+# ===== Android SDK =====
+# macOS
+sdk.dir=/Users/你的用户名/Library/Android/sdk
+# Windows
+# sdk.dir=C\:\\Users\\你的用户名\\AppData\\Local\\Android\\Sdk
+# Linux
+# sdk.dir=/home/你的用户名/Android/Sdk
+
+# ===== 模型服务（OpenAI 兼容协议）=====
+# 任意实现 /chat/completions 的服务都可用；三项留空时改用应用内「设置 → 模型服务」填写。
+# 优先级：应用内设置 > 本文件构建注入 > 通用默认值（https://api.openai.com/v1 + gpt-4o-mini）。
+#
+# OpenAI
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+AI_API_KEY=sk-你的密钥
+#
+# DeepSeek（取消下面三行注释即可）
+# AI_BASE_URL=https://api.deepseek.com/v1
+# AI_MODEL=deepseek-flash
+# AI_API_KEY=sk-你的密钥
+#
+# 通义千问（OpenAI 兼容模式）
+# AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+# AI_MODEL=qwen-plus
+# AI_API_KEY=sk-你的密钥
+#
+# 本地 Ollama（Android 模拟器访问宿主机；真机改成电脑局域网 IP，可留空 Key）
+# AI_BASE_URL=http://10.0.2.2:11434/v1
+# AI_MODEL=qwen2.5:7b
+# AI_API_KEY=

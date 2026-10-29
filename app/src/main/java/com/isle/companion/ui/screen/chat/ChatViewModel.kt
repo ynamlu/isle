@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.isle.companion.data.local.entity.CharacterEntity
 import com.isle.companion.data.local.entity.MessageEntity
 import com.isle.companion.data.prefs.UserProfile
+import com.isle.companion.data.remote.OpenAiException
 import com.isle.companion.di.AppContainer
 import com.isle.companion.domain.prompt.PromptBuilder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -150,7 +151,7 @@ class ChatViewModel(
         val character = _character.value ?: return
         val settings = container.settingsRepository.settings.first()
         if (!settings.isConfigured) {
-            _error.value = "请先在设置中填写 DeepSeek API Key"
+            _error.value = "请先在设置中填写模型服务的 API Key 与接口地址"
             return
         }
         if (_isStreaming.value) return
@@ -194,7 +195,7 @@ class ChatViewModel(
             isMinor = userProfile.isMinor
         )
 
-        eventSource = container.deepSeekClient.stream(
+        eventSource = container.openAiClient.stream(
             settings = settings,
             messages = conversation,
             onDelta = { delta ->
@@ -286,10 +287,14 @@ class ChatViewModel(
             t is UnknownHostException -> "网络连接失败，请检查网络后重试"
             t is SocketTimeoutException || t is InterruptedIOException -> "连接超时，请重试"
             raw.contains("401") -> "API Key 无效，请到设置页检查"
+            raw.contains("403") -> "没有访问权限，请检查 API Key 或模型权限"
+            raw.contains("404") -> "接口地址或模型不存在，请到设置页检查"
             raw.contains("402") -> "账户余额不足，请充值后重试"
             raw.contains("429") -> "请求过于频繁，请稍后再试"
             raw.contains("500") || raw.contains("502") || raw.contains("503") ->
                 "服务暂时不可用，请稍后重试"
+            t is OpenAiException -> raw.ifBlank { "请求失败" }
+            t is IllegalArgumentException -> raw.ifBlank { "API 地址格式不正确" }
             t is IOException -> "网络异常，请重试"
             else -> "请求失败：${raw.ifBlank { "未知错误" }}"
         }

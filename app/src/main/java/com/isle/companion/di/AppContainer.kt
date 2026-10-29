@@ -5,8 +5,8 @@ import com.isle.companion.data.demo.DemoDataSeeder
 import com.isle.companion.data.local.IsleDatabase
 import com.isle.companion.data.prefs.SettingsRepository
 import com.isle.companion.data.prefs.UserProfileRepository
-import com.isle.companion.data.remote.DeepSeekApi
-import com.isle.companion.data.remote.DeepSeekClient
+import com.isle.companion.data.remote.OpenAiApi
+import com.isle.companion.data.remote.OpenAiClient
 import com.isle.companion.data.repository.CharacterRepository
 import com.isle.companion.data.repository.ChatRepository
 import com.isle.companion.data.repository.MemoryRepository
@@ -44,24 +44,25 @@ class AppContainer(context: Context) {
         .build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.deepseek.com/")
+        // 仅作为 Retrofit 的占位 Base URL；真实地址由 OpenAiClient 在每次请求时用 @Url 传入
+        .baseUrl("https://api.openai.com/")
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
-    private val deepSeekApi: DeepSeekApi = retrofit.create(DeepSeekApi::class.java)
+    private val openAiApi: OpenAiApi = retrofit.create(OpenAiApi::class.java)
 
     private val database: IsleDatabase = IsleDatabase.get(appContext)
 
     val settingsRepository = SettingsRepository(appContext)
     val userProfileRepository = UserProfileRepository(appContext)
     val avatarStorage = AvatarStorage(appContext)
-    val deepSeekClient = DeepSeekClient(json, okHttpClient, deepSeekApi)
+    val openAiClient = OpenAiClient(json, okHttpClient, openAiApi)
     val characterRepository = CharacterRepository(database.characterDao(), avatarStorage, database.messageDao())
     val chatRepository = ChatRepository(database.messageDao())
     val embeddingProvider: EmbeddingProvider = OnnxEmbeddingProvider(appContext)
     val memoryRepository = MemoryRepository(database.memoryDao(), embeddingProvider)
-    val memoryExtractor = MemoryExtractor(json, deepSeekClient)
+    val memoryExtractor = MemoryExtractor(json, openAiClient)
 
     val demoDataSeeder = DemoDataSeeder(
         context = appContext,

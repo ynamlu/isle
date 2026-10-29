@@ -11,7 +11,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Isle">
+        android:theme="@style/Theme.Isle"
+        android:usesCleartextTraffic="true">
+        <!-- 允许 http://：OpenAI 兼容的本地/局域网模型服务（Ollama、LM Studio、vLLM 等）
+             通常只有 http，而 Android 9+ 默认禁止明文流量。如只连接公网 HTTPS，可改为 false。 -->
 
         <activity
             android:name=".MainActivity"
