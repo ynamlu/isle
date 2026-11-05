@@ -112,9 +112,19 @@ def strip_before_first_h2(text: str) -> str:
 def build_toc(md: markdown.Markdown) -> str:
     out = []
     for token in md.toc_tokens:
-        if token["level"] == 2:
+        level = token["level"]
+        if level == 1:
             out.append(
-                f'<li><a href="#{token["id"]}">{html.escape(token["name"])}</a></li>'
+                f'<li class="toc-h1"><a href="#{token["id"]}">{html.escape(token["name"])}</a></li>'
+            )
+            for child in token.get("children", []):
+                if child["level"] == 2:
+                    out.append(
+                        f'<li class="toc-h2"><a href="#{child["id"]}">{html.escape(child["name"])}</a></li>'
+                    )
+        elif level == 2:
+            out.append(
+                f'<li class="toc-h2"><a href="#{token["id"]}">{html.escape(token["name"])}</a></li>'
             )
     return '<nav class="toc"><h2 class="toc-title">目录</h2><ul>' + "".join(out) + "</ul></nav>"
 
@@ -185,8 +195,12 @@ def build_html(doc: dict[str, str]) -> str:
   .toc ul {{ list-style: none; padding-left: 0; margin: 0; }}
   .toc li {{ margin: 2.2mm 0; font-size: 10.5pt; }}
   .toc li a {{ color: #23242a; text-decoration: none; }}
-  .toc-h3 {{ padding-left: 7mm; font-size: 9.5pt !important; color: #5b6270 !important; }}
-  .toc-sub {{ margin: 1mm 0 3mm 0 !important; }}
+  .toc-h1 {{ margin-top: 4.5mm; font-weight: 700; color: #1d2f63; }}
+  .toc-h2 {{ padding-left: 7mm; font-size: 9.8pt !important; color: #4d5666 !important; }}
+  .content h1 {{
+    page-break-before: always; margin: 8mm 0 5mm; padding-bottom: 3mm;
+    font-size: 21pt; color: #1d2f63; border-bottom: .6mm solid #dfe6f2;
+  }}
   h2 {{
     margin: 9mm 0 5mm; padding-top: 2mm;
     font-size: 18pt; line-height: 1.25; color: #1d2f63;
