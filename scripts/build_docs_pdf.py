@@ -44,6 +44,16 @@ DOCS = [
         "icon": "../心屿-新图标.png",
     },
     {
+        "src": "docs/markdown/测试报告.md",
+        "pdf": "docs/pdf/测试报告.pdf",
+        "title": "心屿（Isle）",
+        "subtitle": "测试报告",
+        "version": "v2.2.4",
+        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "header": "心屿 · 测试报告",
+        "icon": "../心屿-新图标.png",
+    },
+    {
         "src": "docs/markdown/用户使用说明书.md",
         "pdf": "docs/pdf/用户使用说明书.pdf",
         "title": "心屿（Isle）",

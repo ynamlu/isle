@@ -352,6 +352,7 @@ docs/
 | [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/markdown/产品说明.md`](docs/markdown/产品说明.md) · [PDF](docs/pdf/产品说明.pdf) | 产品定位、用户旅程、设计取舍、路线图 |
 | [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
+| [`docs/markdown/测试报告.md`](docs/markdown/测试报告.md) · [PDF](docs/pdf/测试报告.pdf) | 自动化测试、真机回归、安全专项、缺陷记录 |
 
 ---
 
