@@ -101,6 +101,17 @@
 - 输入框获得焦点后自动重试拉起键盘，兼容懒加载/插件式第三方输入法；
 - 聊天页展示角色主题色与 Agent Trace。
 
+### 7. 情绪手账
+
+结束一段深度对话后，点聊天页右上角 ✨ 或「生成手账」：
+
+- LLM 从对话中提炼一句金句、标题和情绪；
+- 生成 1080×1440 的品牌渐变手账图；
+- 右下角自带渠道二维码，指向 `share/index.html` 落地页；
+- 点「保存图片」保存到 `Pictures/心屿/`，再分享至朋友圈或小红书。
+
+二维码地址可通过 `local.properties` 的 `SHARE_QR_URL` 配置。
+
 ---
 
 ## 产品截图
@@ -275,6 +286,7 @@ Data 层
 | 序列化 | kotlinx.serialization | 1.11.0 |
 | 端侧推理 | ONNX Runtime Android | 1.31.0 |
 | 端侧模型 | bge-small-zh-v1.5 int8 | 512 维 / 23.9MB |
+| 手账二维码 | ZXing core | 3.5.3 |
 | 图片 | Coil | 3.4.0 |
 
 ---
@@ -316,6 +328,7 @@ Isle/
 ├── app/src/test/                            # JVM 单测
 ├── app/src/androidTest/                     # 仪器化测试
 ├── docs/                                    # 交付文档与截图
+├── share/                                   # 情绪手账二维码落地页
 └── gradle/                                  # 版本目录 / Wrapper
 ```
 
@@ -382,4 +395,4 @@ docs/
 
 - GitHub：<https://github.com/ynamlu/isle>
 - 作者：沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
-- 版本：`v2.2.4`（versionCode 12）
+- 版本：`v2.3.0`（versionCode 13）
