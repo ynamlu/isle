@@ -37,6 +37,8 @@ https://isle-proxy.<你的子域>.workers.dev
 https://isle-proxy.ynatech.xyz
 ```
 
+已启用 Cloudflare Smart Placement，尽量把 Worker 调度到靠近上游的区域。
+
 ## 4. 配置 App
 
 在项目根目录 `local.properties` 中：
@@ -104,6 +106,10 @@ curl -sS https://isle-proxy.ynatech.xyz/v1/models \
 ```
 
 返回模型列表即正常；再在 App 里发一条消息确认流式回复。
+
+## 性能注意
+
+Worker 会读取并重新序列化请求体，图片 base64 越大，代理转发耗时越明显。建议客户端把聊天图片压到 1024px / JPEG 82 左右，通常可降到 100–200KB。
 
 ## 安全边界
 

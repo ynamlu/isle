@@ -13,3 +13,6 @@ MAX_TOKENS = "2048"
 
 # 当前不启用按 IP 限流，优先保证图片与长回复速度。
 # 如需恢复，可创建 KV 并在 worker.js 中加入限流逻辑。
+
+[placement]
+mode = "smart"
