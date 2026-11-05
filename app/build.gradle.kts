@@ -31,7 +31,7 @@ val aiBaseUrl = localProp("AI_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE")
     .ifEmpty { if (legacyDeepSeekMode) "https://api.deepseek.com/v1" else "" }
 val aiModel = localProp("AI_MODEL", "OPENAI_MODEL", "AI_MODEL_ID")
     .ifEmpty { if (legacyDeepSeekMode) "deepseek-flash" else "" }
-val shareQrUrl = localProp("SHARE_QR_URL").ifEmpty { "https://github.com/ynamlu/isle" }
+val shareQrUrl = localProp("SHARE_QR_URL").ifEmpty { "https://isle.ynatech.xyz/" }
 
 /** 转义为 BuildConfig（Java 源码）中的字符串字面量，避免地址/Key 中的特殊字符破坏生成。 */
 fun buildConfigStringLiteral(value: String): String = buildString {

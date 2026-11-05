@@ -39,4 +39,4 @@ AI_API_KEY=sk-你的密钥
 
 # ===== 情绪手账二维码 =====
 # 部署 share/index.html 后，把地址填在这里；不填则默认指向 GitHub 仓库。
-# SHARE_QR_URL=https://你的域名/
+SHARE_QR_URL=https://isle.ynatech.xyz/

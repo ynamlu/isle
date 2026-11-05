@@ -22,10 +22,12 @@ SHARE_QR_URL=https://你的域名/
 
 手账图右下角的二维码会指向这个地址。
 
-## 当前默认地址
+## 当前地址
 
-如果未配置 `SHARE_QR_URL`，二维码默认指向：
+当前部署地址：
 
 ```text
-https://github.com/ynamlu/isle
+https://isle.ynatech.xyz/
 ```
+
+如果未配置 `SHARE_QR_URL`，构建默认也使用该地址。

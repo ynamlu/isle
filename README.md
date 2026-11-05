@@ -110,7 +110,7 @@
 - 右下角自带渠道二维码，指向 `share/index.html` 落地页；
 - 点「保存图片」保存到 `Pictures/心屿/`，再分享至朋友圈或小红书。
 
-二维码地址可通过 `local.properties` 的 `SHARE_QR_URL` 配置。
+二维码地址可通过 `local.properties` 的 `SHARE_QR_URL` 配置；当前落地页为 <https://isle.ynatech.xyz/>。
 
 ---
 
