@@ -18,3 +18,6 @@ docs/心屿演示视频.mp4
 
 # Cloudflare local secrets
 .dev.vars
+
+# Wrangler local cache
+server/cloudflare-worker/.wrangler/
