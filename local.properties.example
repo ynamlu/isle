@@ -37,6 +37,12 @@ AI_API_KEY=sk-你的密钥
 # AI_MODEL=qwen2.5:7b
 # AI_API_KEY=
 
+# ===== 代理模式（推荐公开分发，真实 Key 不进入 APK）=====
+# 先部署 server/cloudflare-worker，再把 AI_BASE_URL 指向 Worker。
+# AI_BASE_URL=https://isle-proxy.你的子域.workers.dev/v1
+# AI_MODEL=qwen3.5-omni-plus
+# AI_API_KEY=你的代理令牌（不是上游真实 Key）
+
 # ===== 情绪手账二维码 =====
 # 部署 share/index.html 后，把地址填在这里；不填则默认指向 GitHub 仓库。
 SHARE_QR_URL=https://isle.ynatech.xyz/

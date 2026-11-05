@@ -329,6 +329,7 @@ Isle/
 ├── app/src/androidTest/                     # 仪器化测试
 ├── docs/                                    # 交付文档与截图
 ├── share/                                   # 情绪手账二维码落地页
+├── server/cloudflare-worker/                # 保护真实 Key 的代理（可选）
 └── gradle/                                  # 版本目录 / Wrapper
 ```
 
@@ -372,6 +373,7 @@ docs/
 ## 隐私与安全
 
 - 聊天、记忆、向量默认只存本机；
+- 需要公开分发又不暴露真实 Key 时，可部署 `server/cloudflare-worker`，APK 只携带代理令牌；
 - 发送消息时，内容会传输至你配置的模型服务用于生成回复；
 - 本地账户不收集手机号、邮箱、实名信息；
 - 删除账户会清除本地数据；

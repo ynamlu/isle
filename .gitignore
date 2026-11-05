@@ -15,3 +15,6 @@ local.properties
 # 演示视频体积过大，不入库（新录制的视频也沿用该规则）
 docs/*.mp4
 docs/心屿演示视频.mp4
+
+# Cloudflare local secrets
+.dev.vars
