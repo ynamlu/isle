@@ -63,6 +63,56 @@ AI_API_KEY=<CLIENT_TOKEN>
 
 此时 APK 里只有代理令牌，没有真实模型 Key。
 
+## 换 Key 与轮换令牌
+
+### 只换上游真实 Key（最常见）
+
+不需要改代码，也不需要重新打包 APK：
+
+```bash
+cd server/cloudflare-worker
+npx wrangler secret put UPSTREAM_API_KEY
+```
+
+粘贴新 Key 回车即可，Secret 会自动生成新版本并立即生效。  
+App 端无需任何操作。
+
+### 换代理令牌 CLIENT_TOKEN
+
+```bash
+npx wrangler secret put CLIENT_TOKEN
+```
+
+然后必须同步更新 App 的 `local.properties`：
+
+```properties
+AI_API_KEY=<新的 CLIENT_TOKEN>
+```
+
+并重新打包、重新分发 APK。旧 APK 会因令牌失效而无法调用代理。
+
+### 换代理地址
+
+修改 `local.properties` 的 `AI_BASE_URL`，重新打包并分发 APK。
+
+### 换模型
+
+修改 `wrangler.toml` 的 `ALLOWED_MODELS` 和 `local.properties` 的 `AI_MODEL`：
+
+```bash
+npx wrangler deploy
+./gradlew :app:assembleDebug
+```
+
+### 换完后验证
+
+```bash
+curl -sS https://isle-proxy.ynatech.xyz/v1/models \
+  -H "Authorization: Bearer <CLIENT_TOKEN>"
+```
+
+返回模型列表即正常；再在 App 里发一条消息确认流式回复。
+
 ## 安全边界
 
 - 真实 Key 只在 Worker Secret，不进 APK；
