@@ -223,6 +223,9 @@ adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
 ### ⑥ 测试
 
 ```bash
+# 一键复现：检查 JDK / SDK → 单测 → 构建 → 输出 APK SHA
+./scripts/reproduce.sh
+
 ./gradlew :app:testDebugUnitTest
 ./gradlew connectedDebugAndroidTest
 ./gradlew :app:testDebugUnitTest --tests '*OpenAiClientE2eTest*' -Disle.e2e=1
@@ -401,7 +404,7 @@ docs/
 | [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、代理与密钥保护 |
 | [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/markdown/产品说明.md`](docs/markdown/产品说明.md) · [PDF](docs/pdf/产品说明.pdf) | 产品定位、用户旅程、设计取舍、商业化与用户增长 |
-| [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
+| [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程、完整 AI 对话与 Prompt 历史 |
 | [`docs/markdown/测试报告.md`](docs/markdown/测试报告.md) · [PDF](docs/pdf/测试报告.pdf) | 自动化测试、真机回归、安全专项、缺陷记录 |
 | [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md) | 代理部署、换 Key、令牌轮换与安全边界 |
 
