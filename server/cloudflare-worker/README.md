@@ -39,12 +39,18 @@ wrangler deploy
 https://isle-proxy.<你的子域>.workers.dev
 ```
 
+本项目已绑定自定义域名：
+
+```text
+https://isle-proxy.ynatech.xyz
+```
+
 ## 5. 配置 App
 
 在项目根目录 `local.properties` 中：
 
 ```properties
-AI_BASE_URL=https://isle-proxy.<你的子域>.workers.dev/v1
+AI_BASE_URL=https://isle-proxy.ynatech.xyz/v1
 AI_MODEL=qwen3.5-omni-plus
 AI_API_KEY=<CLIENT_TOKEN>
 ```
