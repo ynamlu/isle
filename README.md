@@ -335,12 +335,22 @@ Isle/
 
 ## 交付文档
 
+```text
+docs/
+├── markdown/      # 所有可编辑源文档
+├── pdf/           # 导出的交付 PDF
+├── screenshots/   # 当前版本界面截图
+├── 封面.png
+├── 心屿-新图标.png
+└── 心屿演示视频.mp4
+```
+
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/技术文档.md`](docs/技术文档.md) · [PDF](docs/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、可复现性 |
-| [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的操作指南 |
-| [`docs/产品说明.md`](docs/产品说明.md) · [PDF](docs/产品说明.pdf) | 产品定位、用户旅程、设计取舍、路线图 |
-| [`docs/开发与AI协同全记录.md`](docs/开发与AI协同全记录.md) · [PDF](docs/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
+| [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、可复现性 |
+| [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
+| [`docs/markdown/产品说明.md`](docs/markdown/产品说明.md) · [PDF](docs/pdf/产品说明.pdf) | 产品定位、用户旅程、设计取舍、路线图 |
+| [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
 
 ---
 
