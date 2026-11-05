@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.isle.companion.di.appContainer
+import com.isle.companion.ui.component.RecoveryCodeDialog
 import com.isle.companion.ui.navigation.IsleNavHost
 import com.isle.companion.ui.screen.auth.AuthScreen
 import com.isle.companion.ui.screen.auth.LockScreen
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
                 val container = LocalContext.current.appContainer
                 val account by container.localAuthRepository.account.collectAsState()
                 val guest by container.localAuthRepository.isGuest.collectAsState()
+                val pendingRecoveryCode by container.localAuthRepository.pendingRecoveryCode.collectAsState()
                 val profile by container.userProfileRepository.profile
                     .collectAsState(initial = null)
                 var showSplash by rememberSaveable { mutableStateOf(true) }
@@ -99,6 +101,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                pendingRecoveryCode?.let { code ->
+                    RecoveryCodeDialog(
+                        code = code,
+                        onDone = { container.localAuthRepository.acknowledgeRecoveryCode() }
+                    )
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -304,7 +305,7 @@ private fun RegisterContent(
         enabled = !busy && nickname.isNotBlank() && password.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (busy) CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
+        if (busy) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         else Text("创建账户")
     }
     Text(
@@ -339,7 +340,7 @@ private fun LoginContent(
     )
     AuthMessage(message)
     Button(onClick = onSubmit, enabled = !busy && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
-        if (busy) CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
+        if (busy) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         else Text("解锁")
     }
     TextButton(onClick = onForgot, modifier = Modifier.fillMaxWidth()) {
@@ -389,7 +390,7 @@ private fun RecoveryContent(
         enabled = !busy && code.isNotBlank() && newPassword.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (busy) CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
+        if (busy) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         else Text("重设密码")
     }
 }
@@ -522,7 +523,7 @@ fun LockScreen(
                     enabled = !busy && password.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (busy) CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
+                    if (busy) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     else Text("解锁")
                 }
                 TextButton(onClick = { showRecovery = true; message = null }) {

@@ -1,7 +1,7 @@
 ---
 title: 心屿（Isle）
 subtitle: 开发与 AI 协同全记录（合订本）
-version: v2.2.1
+version: v2.2.4
 date: 2026-11-05
 author: 沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
 ---

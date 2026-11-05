@@ -40,6 +40,10 @@ class LocalAuthRepository(private val context: Context) {
     private val _isGuest = MutableStateFlow(prefs.getBoolean(KEY_GUEST, false) && _account.value == null)
     val isGuest: StateFlow<Boolean> = _isGuest.asStateFlow()
 
+    /** 注册成功后待用户保存的恢复码；只在内存中保留。 */
+    private val _pendingRecoveryCode = MutableStateFlow<String?>(null)
+    val pendingRecoveryCode: StateFlow<String?> = _pendingRecoveryCode.asStateFlow()
+
     val hasAccount: Boolean get() = _account.value != null
 
     suspend fun createAccount(nickname: String, password: String): AuthResult =
@@ -70,6 +74,7 @@ class LocalAuthRepository(private val context: Context) {
             prefs.edit().putBoolean(KEY_GUEST, false).apply()
             _account.value = account
             _isGuest.value = false
+            _pendingRecoveryCode.value = recoveryCode
             AuthResult.Success(account, recoveryCode)
         }
 
@@ -176,6 +181,10 @@ class LocalAuthRepository(private val context: Context) {
             AuthResult.Success(updated)
         }
 
+    fun acknowledgeRecoveryCode() {
+        _pendingRecoveryCode.value = null
+    }
+
     fun continueAsGuest() {
         prefs.edit().putBoolean(KEY_GUEST, true).apply()
         _isGuest.value = true
@@ -191,6 +200,7 @@ class LocalAuthRepository(private val context: Context) {
         prefs.edit().clear().apply()
         _account.value = null
         _isGuest.value = false
+        _pendingRecoveryCode.value = null
     }
 
     private fun loadAccount(): LocalAccount? = runCatching {

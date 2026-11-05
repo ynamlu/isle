@@ -129,7 +129,7 @@ fun ProfileAccountScreen(
                             visualTransformation = PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             shape = IsleRadius.field,
-                            modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
+                            modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                         )
                         recoveryMessage?.let {
                             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -298,7 +298,7 @@ fun ProfileAccountScreen(
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                 shape = IsleRadius.field,
-                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
+                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                             )
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
@@ -309,7 +309,7 @@ fun ProfileAccountScreen(
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                 shape = IsleRadius.field,
-                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
+                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                             )
                             message?.let {
                                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
