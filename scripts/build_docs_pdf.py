@@ -135,7 +135,7 @@ def build_html(doc: dict[str, str]) -> str:
     title = meta.get("title", doc["title"])
     subtitle = meta.get("subtitle", doc["subtitle"])
     version = meta.get("version", doc["version"])
-    date = meta.get("date", "2026-11-05")
+    date = meta.get("date", "2026-11-06")
     author = meta.get("author", doc["author"])
     body = strip_before_first_h2(strip_first_h1(body))
 
@@ -218,6 +218,8 @@ def build_html(doc: dict[str, str]) -> str:
   table {{
     width: 100%; border-collapse: collapse; margin: 3mm 0 5mm;
     font-size: 9pt; page-break-inside: auto;
+  }}
+  table th:first-child, table td:first-child {{ min-width: 14mm; }}
   }}
   tr {{ page-break-inside: avoid; page-break-after: auto; }}
   th, td {{ border: .25mm solid #d9e0ea; padding: 2mm 2.2mm; vertical-align: top; }}

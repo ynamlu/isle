@@ -163,9 +163,27 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 # sdk.dir=/home/你的用户名/Android/Sdk
 ```
 
-### ③ 配置模型服务（可选）
+### ③ 配置模型服务
 
-应用不绑定厂商，只要兼容 OpenAI `/chat/completions` 协议即可：
+公开分发的安装包默认通过 Cloudflare Worker 代理接入模型：上游真实 Key 保存在 Worker Secret，APK 只携带可撤销的代理令牌，用户无需填写 Key。
+
+自行从源码构建时，二选一：
+
+**方式 A · 代理模式（推荐公开分发）**
+
+先部署 `server/cloudflare-worker/`，再在 `local.properties` 中填写代理地址和代理令牌：
+
+```properties
+AI_BASE_URL=https://isle-proxy.ynatech.xyz/v1
+AI_MODEL=qwen3.5-omni-plus
+AI_API_KEY=<CLIENT_TOKEN>
+```
+
+完整部署与换 Key 流程见 [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md)。
+
+**方式 B · BYOK（用户自带 Key）**
+
+不部署代理，直接连接兼容 OpenAI `/chat/completions` 的服务：
 
 ```properties
 AI_BASE_URL=https://api.deepseek.com/v1
@@ -174,7 +192,7 @@ AI_API_KEY=sk-你的密钥
 ```
 
 优先级：**应用内设置 > local.properties 注入 > 通用默认值**。
-`local.properties` 不入库；APK 内置 Key 仅用于演示，请勿公开分发。
+`local.properties` 不入库；公开分发时不要把上游真实 Key 注入 APK。
 
 ### ④ 构建
 
@@ -268,6 +286,23 @@ Data 层
 - 应用锁 60 秒；
 - 删除账户清空本地数据。
 
+### 模型接入与密钥保护
+
+公开分发包不包含上游真实 Key：
+
+```text
+App（只带代理令牌）
+  → Cloudflare Worker（校验令牌 / 模型白名单 / max_tokens / 每日限额）
+  → 千问 MaaS（真实 Key 只在 Worker Secret）
+```
+
+- 真实 Key 只存在 Cloudflare Secret `UPSTREAM_API_KEY`；
+- APK 只含代理地址和可撤销的 `CLIENT_TOKEN`；
+- 换上游 Key：`wrangler secret put UPSTREAM_API_KEY`，**无需重新打包**；
+- 换代理令牌或地址：更新 `local.properties` 并重新打包；
+- 代理令牌仍可能被反编译提取，但无法换取真实 Key，且受模型白名单、`max_tokens` 与按 IP 每日 100 次限制；
+- 代理代码与部署说明：`server/cloudflare-worker/`。
+
 ---
 
 ## 技术栈
@@ -329,7 +364,7 @@ Isle/
 ├── app/src/androidTest/                     # 仪器化测试
 ├── docs/                                    # 交付文档与截图
 ├── share/                                   # 情绪手账二维码落地页
-├── server/cloudflare-worker/                # 保护真实 Key 的代理（可选）
+├── server/cloudflare-worker/                # 模型代理（正式分发默认）
 └── gradle/                                  # 版本目录 / Wrapper
 ```
 
@@ -343,6 +378,7 @@ Isle/
 | JVM 单测 | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | **60 tests，0 failures** |
 | 仪器化 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
 | 真机 | CPH2747 / Android 17 | 注册 / 锁定 / 场景 / 危机拦截 / 记忆折叠 / 四栏导航 |
+| 代理链路 | Cloudflare Worker | `/v1/models` 200 / SSE 正常 / 无令牌 401 / 非白名单模型 400 |
 | 端侧向量 | `TextEmbedderTest` | 相似句 0.85 / 无关句 0.39 |
 | 包体 | arm64 debug | 约 68MB（含 ONNX 模型） |
 
@@ -362,23 +398,25 @@ docs/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、可复现性 |
+| [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、代理与密钥保护 |
 | [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/markdown/产品说明.md`](docs/markdown/产品说明.md) · [PDF](docs/pdf/产品说明.pdf) | 产品定位、用户旅程、设计取舍、商业化与用户增长 |
 | [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
 | [`docs/markdown/测试报告.md`](docs/markdown/测试报告.md) · [PDF](docs/pdf/测试报告.pdf) | 自动化测试、真机回归、安全专项、缺陷记录 |
+| [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md) | 代理部署、换 Key、令牌轮换与安全边界 |
 
 ---
 
 ## 隐私与安全
 
 - 聊天、记忆、向量默认只存本机；
-- 需要公开分发又不暴露真实 Key 时，可部署 `server/cloudflare-worker`，APK 只携带代理令牌；
-- 发送消息时，内容会传输至你配置的模型服务用于生成回复；
+- 公开分发包通过 `server/cloudflare-worker` 代理接入，APK 只携带可撤销的代理令牌；
+- 上游真实 Key 保存在 Cloudflare Secret，不进入 APK、仓库或客户端配置；
+- 发送消息时，内容会传输至代理与模型服务用于生成回复；
 - 本地账户不收集手机号、邮箱、实名信息；
 - 删除账户会清除本地数据；
 - 危机内容不写入长期记忆；
-- APK 内置演示 Key 仅用于评审，公开分发前请轮换或改后端代理。
+- 代理令牌仍可能被提取，已通过模型白名单、`max_tokens` 上限与按 IP 每日 100 次限额降低滥用风险，发现异常可随时轮换。
 
 ---
 

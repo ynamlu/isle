@@ -2,7 +2,7 @@
 title: 心屿（Isle）
 subtitle: 开发与 AI 协同全记录（合订本）
 version: v2.3.0
-date: 2026-11-05
+date: 2026-11-06
 author: 沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
 ---
 
@@ -386,7 +386,8 @@ AI：
 - 开发者信息固定三行；
 - 文档聚焦当前产品、不强调“比赛版”；
 - 演示视频不提交 Git；
-- 源码包不带 `local.properties`。
+- 源码包不带 `local.properties`；
+- 公开分发包不内置上游真实 Key，统一走代理。
 
 ## 17. 经验总结
 
@@ -395,7 +396,107 @@ AI：
 3. **本地优先**：账号、记忆、向量都尽量留在设备；
 4. **状态要放在能活过返回的地方**：ViewModel 而不是 `remember`；
 5. **文档与代码同时演进**：页数、版本号、入口、角色都要同步；
-6. **真机是最终裁判**：输入法、异常数据、返回栈只有真机能暴露。
+6. **真机是最终裁判**：输入法、异常数据、返回栈只有真机能暴露；
+7. **客户端藏不住密钥**：能做的不是“永不泄露”，而是让泄露的凭证价值有限、可撤销。
+
+---
+
+# 第五部分 · 密钥保护与部署
+
+## 18. 从“内置 Key”到 Serverless 代理
+
+### 18.1 问题是怎么暴露的
+
+早期为了“打开就能用”，构建脚本从 `local.properties` 读取模型 Key，写入 `BuildConfig.DEMO_AI_API_KEY`。这在演示阶段很方便，但 APK 一旦公开分发，任何人都可以解包 `classes*.dex`，用 `strings` 找到完整 Key。
+
+问题的本质是：**密钥一旦随 APK 到达客户端，就迟早会被提取**，混淆只能增加难度。
+
+### 18.2 四种方案对比
+
+| 方案 | 真实 Key 是否进 APK | 用户是否要配置 | 适用场景 |
+| --- | --- | --- | --- |
+| 内置 Key | 是 | 否 | 仅限私有演示 |
+| BYOK | 否 | 是 | 开源、用户自带账号 |
+| Serverless 代理 | 否 | 否 | 比赛演示、公开分发 |
+| 自建服务器代理 | 否 | 否 | 长期运营、需要备案 |
+
+用户没有服务器，因此选 **Cloudflare Worker**：免运维、免费额度够演示、Secret 不进代码。
+
+### 18.3 Worker 的设计
+
+代理只暴露两个端点：
+
+```text
+GET  /v1/models
+POST /v1/chat/completions
+```
+
+请求链路：
+
+```text
+App（Bearer <CLIENT_TOKEN>）
+  → Worker：校验令牌 / 白名单 / max_tokens / IP 限额
+  → 携带 UPSTREAM_API_KEY 请求千问 MaaS
+  → 透传 SSE
+```
+
+### 设计取舍
+
+- **不暴露通用转发**：只允许固定上游和两个端点，避免代理被当成免费网关；
+- **真实 Key 只进 Secret**：`wrangler.toml` 里只有地址、模型白名单和限额；
+- **令牌可撤销**：`CLIENT_TOKEN` 泄露时可以单独轮换，不影响上游账号；
+- **限流放在边缘**：KV 计数在 Worker 内完成，不需要额外数据库；
+- **SSE 直通**：不缓冲完整回复，保留逐字输出体验。
+
+### 18.4 部署与验证
+
+部署命令：
+
+```bash
+cd server/cloudflare-worker
+npx wrangler kv namespace create RATE_LIMIT
+npx wrangler secret put UPSTREAM_API_KEY
+npx wrangler secret put CLIENT_TOKEN
+npx wrangler deploy
+```
+
+绑定自定义域名：
+
+```text
+https://isle-proxy.ynatech.xyz
+```
+
+验证记录：
+
+| 项目 | 结果 |
+| --- | --- |
+| `GET /v1/models` + 正确令牌 | 200，返回模型列表 |
+| 无令牌 / 错误令牌 | 401 `unauthorized` |
+| 非白名单模型 | 400 `model not allowed` |
+| 非流式对话 | 200，正常正文 |
+| 流式对话 | SSE `data:` 逐字返回 |
+| APK 扫描 `sk-ws-` | 0 处 |
+| APK 代理地址 | 存在 `isle-proxy.ynatech.xyz` |
+| 真机发送消息 | 正常流式回复 |
+
+### 18.5 换 Key 与安全边界
+
+| 变更 | 操作 | 是否重打 APK |
+| --- | --- | --- |
+| 换上游真实 Key | `wrangler secret put UPSTREAM_API_KEY` | 否 |
+| 换代理令牌 | 更新 Secret + `local.properties` | 是 |
+| 换代理地址 | 更新 `local.properties` | 是 |
+| 换模型 | 更新白名单与 `AI_MODEL` | 是 |
+
+必须承认的边界：
+
+- `CLIENT_TOKEN` 仍可能被反编译提取；
+- 它能调用代理，但拿不到真实 Key；
+- 模型白名单、`max_tokens` 和每日限额把滥用成本压到可控范围；
+- 发现异常时轮换令牌并重新分发 APK；
+- 更高安全等级可以加设备注册、短期 JWT、Play Integrity，但比赛阶段不必过度设计。
+
+这次改造留下的经验是：**安全方案要匹配分发方式**。私有演示可以内置 Key，公开分发就必须把密钥从客户端拿走。
 
 ---
 
@@ -414,6 +515,9 @@ AI：
 | 导航 | `ui/navigation/IsleNavHost.kt` |
 | 启动封面 | `ui/screen/splash/SplashScreen.kt` |
 | 图标 | `res/drawable/ic_launcher_*.xml` |
+| 代理 Worker | `server/cloudflare-worker/worker.js` |
+| Worker 配置 | `server/cloudflare-worker/wrangler.toml` |
+| 代理部署说明 | `server/cloudflare-worker/README.md` |
 
 ---
 
