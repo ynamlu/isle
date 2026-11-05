@@ -292,7 +292,7 @@ Data 层
 
 ```text
 App（只带代理令牌）
-  → Cloudflare Worker（校验令牌 / 模型白名单 / max_tokens / 每日限额）
+  → Cloudflare Worker（校验令牌 / 模型白名单 / max_tokens）
   → 千问 MaaS（真实 Key 只在 Worker Secret）
 ```
 
@@ -300,7 +300,7 @@ App（只带代理令牌）
 - APK 只含代理地址和可撤销的 `CLIENT_TOKEN`；
 - 换上游 Key：`wrangler secret put UPSTREAM_API_KEY`，**无需重新打包**；
 - 换代理令牌或地址：更新 `local.properties` 并重新打包；
-- 代理令牌仍可能被反编译提取，但无法换取真实 Key，且受模型白名单、`max_tokens` 与按 IP 每日 100 次限制；
+- 代理令牌仍可能被反编译提取，但无法换取真实 Key，且受模型白名单与 `max_tokens` 约束；
 - 代理代码与部署说明：`server/cloudflare-worker/`。
 
 ---
@@ -375,11 +375,11 @@ Isle/
 | 维度 | 手段 | 结果 |
 | --- | --- | --- |
 | 编译 | `assembleDebug` | BUILD SUCCESSFUL |
-| JVM 单测 | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | **60 tests，0 failures** |
-| 仪器化 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
+| JVM | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | **60 tests，0 failures** |
+| 仪器 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
 | 真机 | CPH2747 / Android 17 | 注册 / 锁定 / 场景 / 危机拦截 / 记忆折叠 / 四栏导航 |
-| 代理链路 | Cloudflare Worker | `/v1/models` 200 / SSE 正常 / 无令牌 401 / 非白名单模型 400 |
-| 端侧向量 | `TextEmbedderTest` | 相似句 0.85 / 无关句 0.39 |
+| 代理 | Cloudflare Worker | `/v1/models` 200 / SSE 正常 / 无令牌 401 / 非白名单模型 400 / 2.1MB 图片请求 200 |
+| 向量 | `TextEmbedderTest` | 相似句 0.85 / 无关句 0.39 |
 | 包体 | arm64 debug | 约 68MB（含 ONNX 模型） |
 
 ---
@@ -416,7 +416,7 @@ docs/
 - 本地账户不收集手机号、邮箱、实名信息；
 - 删除账户会清除本地数据；
 - 危机内容不写入长期记忆；
-- 代理令牌仍可能被提取，已通过模型白名单、`max_tokens` 上限与按 IP 每日 100 次限额降低滥用风险，发现异常可随时轮换。
+- 代理令牌仍可能被提取，已通过模型白名单与 `max_tokens` 上限降低滥用风险，发现异常可随时轮换；当前不启用请求限流，避免图片与长回复被限额打断。
 
 ---
 

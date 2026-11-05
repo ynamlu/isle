@@ -10,11 +10,6 @@ routes = [
 UPSTREAM_BASE_URL = "https://maas.qianwenaiapi.com/compatible-mode/v1"
 ALLOWED_MODELS = "qwen3.5-omni-plus,deepseek-chat,deepseek-flash"
 MAX_TOKENS = "2048"
-DAILY_LIMIT = "100"
 
-# 先执行：
-#   npx wrangler kv namespace create RATE_LIMIT
-# 再把 id 填到这里；不填也可以运行，只是不启用按 IP 限流。
-[[kv_namespaces]]
-binding = "RATE_LIMIT"
-id = "e032defed13d45bc88b1c461e72934fa"
+# 当前不启用按 IP 限流，优先保证图片与长回复速度。
+# 如需恢复，可创建 KV 并在 worker.js 中加入限流逻辑。

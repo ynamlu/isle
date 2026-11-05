@@ -4,8 +4,9 @@
  * 作用：
  * 1. 真实模型 Key 只保存在 Worker Secret 中，绝不进入 APK；
  * 2. App 只携带可撤销的 CLIENT_TOKEN；
- * 3. 限制模型白名单、max_tokens、按 IP 每日请求数；
- * 4. 透传 SSE，保持流式回复。
+ * 3. 限制模型白名单与 max_tokens；
+ * 4. 透传 SSE，保持流式回复；
+ * 5. 不启用请求限流，优先保证图片与长回复速度。
  *
  * 部署：见同目录 README.md
  */
@@ -31,10 +32,6 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/v1/chat/completions") {
       if (!authorized(request, env)) return unauthorized();
-
-      const limited = await rateLimited(request, env);
-      if (limited) return limited;
-
       return proxyChat(request, env);
     }
 
@@ -71,7 +68,7 @@ async function proxyChat(request, env) {
   let body;
   try {
     const raw = await request.text();
-    if (raw.length > 250_000) return json({ error: "payload too large" }, 413);
+    if (raw.length > 10_000_000) return json({ error: "payload too large" }, 413);
     body = JSON.parse(raw);
   } catch {
     return json({ error: "bad json" }, 400);
@@ -107,22 +104,6 @@ async function proxyChat(request, env) {
       ...CORS,
     },
   });
-}
-
-async function rateLimited(request, env) {
-  if (!env.RATE_LIMIT) return null;
-
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const day = new Date().toISOString().slice(0, 10);
-  const key = `rl:${ip}:${day}`;
-  const limit = Number(env.DAILY_LIMIT || 100);
-
-  const current = Number((await env.RATE_LIMIT.get(key)) || "0");
-  if (current >= limit) {
-    return json({ error: "daily quota exceeded" }, 429);
-  }
-  await env.RATE_LIMIT.put(key, String(current + 1), { expirationTtl: 86400 });
-  return null;
 }
 
 function json(data, status = 200) {

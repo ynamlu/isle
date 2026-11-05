@@ -420,7 +420,7 @@ AI：
 | Serverless 代理 | 否 | 否 | 比赛演示、公开分发 |
 | 自建服务器代理 | 否 | 否 | 长期运营、需要备案 |
 
-用户没有服务器，因此选 **Cloudflare Worker**：免运维、免费额度够演示、Secret 不进代码。
+开发者没有自建服务器，因此选 **Cloudflare Worker**：免运维、免费额度够演示、Secret 不进代码。
 
 ### 18.3 Worker 的设计
 
@@ -435,7 +435,7 @@ POST /v1/chat/completions
 
 ```text
 App（Bearer <CLIENT_TOKEN>）
-  → Worker：校验令牌 / 白名单 / max_tokens / IP 限额
+  → Worker：校验令牌 / 白名单 / max_tokens
   → 携带 UPSTREAM_API_KEY 请求千问 MaaS
   → 透传 SSE
 ```
@@ -443,9 +443,9 @@ App（Bearer <CLIENT_TOKEN>）
 ### 设计取舍
 
 - **不暴露通用转发**：只允许固定上游和两个端点，避免代理被当成免费网关；
-- **真实 Key 只进 Secret**：`wrangler.toml` 里只有地址、模型白名单和限额；
+- **真实 Key 只进 Secret**：`wrangler.toml` 里只有地址、模型白名单和长度上限；
 - **令牌可撤销**：`CLIENT_TOKEN` 泄露时可以单独轮换，不影响上游账号；
-- **限流放在边缘**：KV 计数在 Worker 内完成，不需要额外数据库；
+- **不做入口限流**：优先保证图片与长回复速度，发现滥用再临时封禁；
 - **SSE 直通**：不缓冲完整回复，保留逐字输出体验。
 
 ### 18.4 部署与验证
@@ -454,7 +454,6 @@ App（Bearer <CLIENT_TOKEN>）
 
 ```bash
 cd server/cloudflare-worker
-npx wrangler kv namespace create RATE_LIMIT
 npx wrangler secret put UPSTREAM_API_KEY
 npx wrangler secret put CLIENT_TOKEN
 npx wrangler deploy
@@ -475,6 +474,7 @@ https://isle-proxy.ynatech.xyz
 | 非白名单模型 | 400 `model not allowed` |
 | 非流式对话 | 200，正常正文 |
 | 流式对话 | SSE `data:` 逐字返回 |
+| 2.1MB 图片请求 | 200，正常返回图片描述 |
 | APK 扫描 `sk-ws-` | 0 处 |
 | APK 代理地址 | 存在 `isle-proxy.ynatech.xyz` |
 | 真机发送消息 | 正常流式回复 |
@@ -492,7 +492,7 @@ https://isle-proxy.ynatech.xyz
 
 - `CLIENT_TOKEN` 仍可能被反编译提取；
 - 它能调用代理，但拿不到真实 Key；
-- 模型白名单、`max_tokens` 和每日限额把滥用成本压到可控范围；
+- 模型白名单与 `max_tokens` 把滥用成本压到可控范围；
 - 发现异常时轮换令牌并重新分发 APK；
 - 更高安全等级可以加设备注册、短期 JWT、Play Integrity，但比赛阶段不必过度设计。
 
