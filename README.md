@@ -380,4 +380,4 @@ docs/
 
 - GitHub：<https://github.com/ynamlu/isle>
 - 作者：沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
-- 版本：`v2.1.3`（versionCode 7）
+- 版本：`v2.2.0`（versionCode 8）
