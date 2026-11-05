@@ -27,19 +27,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.isle.companion.ui.component.AboutContent
+import com.isle.companion.ui.theme.GlassCard
+import com.isle.companion.ui.theme.isleBackground
 import com.isle.companion.ui.theme.liquidGlass
 import com.isle.companion.ui.theme.liquidGlassSource
 import com.isle.companion.ui.theme.rememberLiquidGlassState
-import androidx.compose.ui.unit.sp
-import com.isle.companion.ui.theme.GlassCard
-import com.isle.companion.ui.theme.isleBackground
 
 /**
- * 二级页面：技术亮点与开发者信息。
+ * 「关于心屿」：项目介绍、技术亮点、开发者信息与隐私/安全说明。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TechInfoScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit) {
     val hazeState = rememberLiquidGlassState()
 
     Scaffold(
@@ -48,7 +49,7 @@ fun TechInfoScreen(onBack: () -> Unit) {
             TopAppBar(
                 modifier = Modifier.liquidGlass(hazeState),
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                title = { Text("技术亮点与开发者") },
+                title = { Text("关于心屿") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -67,19 +68,20 @@ fun TechInfoScreen(onBack: () -> Unit) {
                     start = 16.dp,
                     end = 16.dp,
                     top = padding.calculateTopPadding() + 8.dp,
-                    bottom = 16.dp
+                    bottom = 24.dp
                 ),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            AboutContent()
 
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text("技术亮点", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(10.dp))
-                    TechBullet("端侧长期记忆", "语义向量检索完全在手机本地完成，对话内容不出设备")
-                    TechBullet("自定义角色", "性格、背景、说话风格与形象皆可自由设定")
-                    TechBullet("图片交流", "可直接发送图片给角色，让 TA 看见你的世界")
-                    TechBullet("流式对话", "逐字回复，像真人一样自然")
+                    TechBullet("端侧长期记忆", "语义向量检索在手机本地完成，记忆默认不上传")
+                    TechBullet("三角色与场景", "闺蜜 / 老师 / 家人，配 8 个情绪支持场景")
+                    TechBullet("多智能体安全路由", "高危/危机暂停角色扮演，固定转介真人资源")
+                    TechBullet("本地匿名账户", "不需要手机号、邮箱和实名信息")
                 }
             }
 
@@ -91,66 +93,68 @@ fun TechInfoScreen(onBack: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "开发者",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "沧州交通学院",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "计算机与信息技术学院",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "软件工程2410  吴思彤",
+                        text = "开发者信息",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(12.dp))
+                    InfoLine("就读院校", "沧州交通学院")
+                    InfoLine("开发者", "吴思彤")
+                    InfoLine("联系方式", "ynawst@foxmail.com")
+                    InfoLine("指导老师", "徐林雪")
+                }
+            }
+
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text("隐私与安全", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "对话记录与密钥仅保存在本机；发送消息时，内容会传输至你配置的模型服务用于生成回复。\n\n" +
+                            "心屿不是心理咨询或医疗诊断工具。如果你正经历强烈痛苦或危机，" +
+                            "请联系 12356 心理援助热线、学校心理中心，或拨打 120/110。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp
+                    )
+                    Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "心屿是一款面向大学生的情绪支持应用。\n" +
-                            "角色、对话与记忆默认保存在你的手机上；" +
-                            "语义向量检索在设备本地完成。\n\n" +
-                            "本应用不替代专业心理咨询服务，也不做诊断或治疗。" +
-                            "若你正经历持续的情绪困扰或危机，请优先联系真人帮助。",
+                        text = "心屿不提供恋人角色，也不进行恋爱、暧昧或亲密关系的角色扮演。" +
+                            "若你未满 18 周岁，请在监护人知情同意的前提下使用。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(14.dp))
-                    Text(
-                        text = "未成年人保护提示",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "· 心屿不提供恋人角色，也不进行恋爱、暧昧或亲密关系的角色扮演。\n\n" +
-                            "· 若你未满 18 周岁，请在监护人知情同意的前提下使用，" +
-                            "并避免过度依赖虚拟关系。\n\n" +
-                            "· 如你正经历情绪困扰或心理危机，请及时向家长、老师、" +
-                            "学校心理中心或专业机构求助。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 20.sp
+                        lineHeight = 20.sp,
+                        textAlign = TextAlign.Start
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "愿每一座孤岛，都能被温柔抵达。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textAlign = TextAlign.Center
+            )
         }
     }
+}
+
+@Composable
+private fun InfoLine(label: String, value: String) {
+    Text(
+        text = "$label：$value",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable

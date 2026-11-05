@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restore
@@ -59,7 +58,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.isle.companion.ui.theme.isleBackground
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.di.appContainer
-import com.isle.companion.ui.component.AboutContent
 import com.isle.companion.ui.theme.IsleBlue
 import com.isle.companion.ui.theme.IsleGold
 import com.isle.companion.ui.theme.IslePurple
@@ -69,22 +67,17 @@ import com.isle.companion.ui.theme.RelationBestie
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onOpenUserProfile: () -> Unit,
+    onOpenProfileAccount: () -> Unit,
     onOpenModelConfig: () -> Unit,
     onOpenStyleConfig: () -> Unit,
-    onOpenTechInfo: () -> Unit,
-    onOpenAccount: () -> Unit,
+    onOpenAbout: () -> Unit,
     isTab: Boolean = false
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory { initializer { SettingsViewModel(container) } }
     )
-    val profileViewModel: UserProfileViewModel = viewModel(
-        factory = viewModelFactory { initializer { UserProfileViewModel(container) } }
-    )
     val settings by viewModel.settings.collectAsState()
-    val profile by profileViewModel.profile.collectAsState()
     val account by container.localAuthRepository.account.collectAsState()
     var showDemoResetDialog by remember { mutableStateOf(false) }
     var showSafetyDialog by remember { mutableStateOf(false) }
@@ -145,35 +138,16 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(4.dp))
                 HorizontalDivider()
-            } else {
-                // ===== 关于心屿（设置详情页直接展示） =====
-                AboutContent()
-                Spacer(Modifier.height(4.dp))
-                HorizontalDivider()
             }
 
             // ===== 二级页面入口 =====
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 SettingsRow(
-                    icon = Icons.Filled.Lock,
-                    tint = IslePurple,
-                    title = "账户与安全",
-                    subtitle = account?.let { "本地账户 · ${it.nickname}" } ?: "游客模式 · 点击创建本地账户",
-                    onClick = onOpenAccount
-                )
-            }
-
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                SettingsRow(
                     icon = Icons.Filled.Person,
                     tint = IslePurple,
-                    title = "我的资料",
-                    subtitle = if (profile.isFilled) {
-                        "已填写" + (if (profile.name.isNotBlank()) " · " + profile.name else "")
-                    } else {
-                        "填写后所有角色都能更快了解你"
-                    },
-                    onClick = onOpenUserProfile
+                    title = "我的资料与账户",
+                    subtitle = account?.let { "本地账户 · ${it.nickname}" } ?: "游客模式 · 点击创建本地账户",
+                    onClick = onOpenProfileAccount
                 )
             }
 
@@ -225,20 +199,11 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     tint = RelationBestie,
-                    title = "技术亮点与开发者",
-                    subtitle = "端侧记忆、隐私保护与开发者信息",
-                    onClick = onOpenTechInfo
+                    title = "关于心屿",
+                    subtitle = "项目介绍、开发者信息与隐私安全",
+                    onClick = onOpenAbout
                 )
             }
-
-            Text(
-                text = "对话记录与密钥仅保存在本机；发送消息时，内容会传输至你配置的模型服务用于生成回复。\n\n" +
-                    "心屿不是心理咨询或医疗诊断工具。如果你正经历强烈痛苦或危机，" +
-                    "请联系 12356 心理援助热线、学校心理中心，或拨打 120/110。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
 
             Spacer(Modifier.height(8.dp))
         }

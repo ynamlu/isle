@@ -8,11 +8,10 @@ object Routes {
     const val CHAT = "chat/{characterId}?scenario={scenarioId}"
     const val CHARACTER_EDIT = "character_edit/{characterId}"
     const val SETTINGS = "settings"
-    const val ACCOUNT = "settings/account"
-    const val USER_PROFILE = "settings/profile"
+    const val PROFILE_ACCOUNT = "settings/profile_account"
     const val MODEL_CONFIG = "settings/model"
     const val STYLE_CONFIG = "settings/style"
-    const val TECH_INFO = "settings/tech"
+    const val ABOUT = "settings/about"
     const val MEMORY = "memory/{characterId}"
 
     fun chat(characterId: Long, scenarioId: String? = null): String =

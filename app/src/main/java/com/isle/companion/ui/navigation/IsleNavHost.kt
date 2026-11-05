@@ -33,12 +33,11 @@ import com.isle.companion.ui.screen.chat.ChatScreen
 import com.isle.companion.ui.screen.memory.MemoryOverviewScreen
 import com.isle.companion.ui.screen.memory.MemoryScreen
 import com.isle.companion.ui.screen.scenario.ScenarioListScreen
-import com.isle.companion.ui.screen.settings.AccountScreen
+import com.isle.companion.ui.screen.settings.AboutScreen
 import com.isle.companion.ui.screen.settings.ModelConfigScreen
+import com.isle.companion.ui.screen.settings.ProfileAccountScreen
 import com.isle.companion.ui.screen.settings.SettingsScreen
 import com.isle.companion.ui.screen.settings.StyleConfigScreen
-import com.isle.companion.ui.screen.settings.TechInfoScreen
-import com.isle.companion.ui.screen.settings.UserProfileScreen
 
 private data class BottomNavItem(
     val route: String,
@@ -110,11 +109,10 @@ fun IsleNavHost(
             composable(Routes.ME) {
                 SettingsScreen(
                     onBack = {},
-                    onOpenUserProfile = { navController.navigate(Routes.USER_PROFILE) },
+                    onOpenProfileAccount = { navController.navigate(Routes.PROFILE_ACCOUNT) },
                     onOpenModelConfig = { navController.navigate(Routes.MODEL_CONFIG) },
                     onOpenStyleConfig = { navController.navigate(Routes.STYLE_CONFIG) },
-                    onOpenTechInfo = { navController.navigate(Routes.TECH_INFO) },
-                    onOpenAccount = { navController.navigate(Routes.ACCOUNT) },
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     isTab = true
                 )
             }
@@ -159,24 +157,19 @@ fun IsleNavHost(
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenUserProfile = { navController.navigate(Routes.USER_PROFILE) },
+                    onOpenProfileAccount = { navController.navigate(Routes.PROFILE_ACCOUNT) },
                     onOpenModelConfig = { navController.navigate(Routes.MODEL_CONFIG) },
                     onOpenStyleConfig = { navController.navigate(Routes.STYLE_CONFIG) },
-                    onOpenTechInfo = { navController.navigate(Routes.TECH_INFO) },
-                    onOpenAccount = { navController.navigate(Routes.ACCOUNT) }
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) }
                 )
             }
 
-            composable(Routes.ACCOUNT) {
-                AccountScreen(
+            composable(Routes.PROFILE_ACCOUNT) {
+                ProfileAccountScreen(
                     onBack = { navController.popBackStack() },
                     onLock = onLock,
                     onAccountDeleted = onAccountDeleted
                 )
-            }
-
-            composable(Routes.USER_PROFILE) {
-                UserProfileScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.MODEL_CONFIG) {
@@ -187,8 +180,8 @@ fun IsleNavHost(
                 StyleConfigScreen(onBack = { navController.popBackStack() })
             }
 
-            composable(Routes.TECH_INFO) {
-                TechInfoScreen(onBack = { navController.popBackStack() })
+            composable(Routes.ABOUT) {
+                AboutScreen(onBack = { navController.popBackStack() })
             }
         }
     }
