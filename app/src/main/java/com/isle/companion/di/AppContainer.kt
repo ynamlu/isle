@@ -12,6 +12,7 @@ import com.isle.companion.data.repository.CharacterRepository
 import com.isle.companion.data.repository.ChatRepository
 import com.isle.companion.data.repository.MemoryRepository
 import com.isle.companion.domain.memory.EmbeddingProvider
+import com.isle.companion.domain.journal.JournalExtractor
 import com.isle.companion.domain.memory.MemoryExtractor
 import com.isle.companion.domain.memory.OnnxEmbeddingProvider
 import com.isle.companion.util.AvatarStorage
@@ -66,6 +67,7 @@ class AppContainer(context: Context) {
     val embeddingProvider: EmbeddingProvider = OnnxEmbeddingProvider(appContext)
     val memoryRepository = MemoryRepository(database.memoryDao(), embeddingProvider)
     val memoryExtractor = MemoryExtractor(json, openAiClient)
+    val journalExtractor = JournalExtractor(json, openAiClient)
 
     val demoDataSeeder = DemoDataSeeder(
         context = appContext,

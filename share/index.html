@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1D1B4B">
+  <meta name="description" content="心屿，一款会记住你的 AI 情绪支持应用。本地记忆、安全路由、匿名账户。">
+  <meta property="og:title" content="心屿 · 一座会记住你的心灵小岛">
+  <meta property="og:description" content="面向大学生的 AI 情绪支持应用。">
+  <meta property="og:image" content="icon.png">
+  <title>心屿 · 一座会记住你的心灵小岛</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --ink: #f8fbff;
+      --muted: rgba(248, 251, 255, .68);
+      --line: rgba(255, 255, 255, .18);
+      --mint: #8FE3C0;
+      --blue: #7AB8FF;
+      --purple: #9D8CFF;
+    }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 78% 18%, rgba(143,227,192,.22), transparent 34%),
+        radial-gradient(circle at 12% 85%, rgba(157,140,255,.20), transparent 38%),
+        linear-gradient(135deg, #11102b 0%, #1d2f63 44%, #2a718f 74%, #48bfa8 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; opacity: .16;
+      background-image: radial-gradient(rgba(255,255,255,.8) .55px, transparent .55px);
+      background-size: 5px 5px;
+    }
+    .wrap { position: relative; width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 56px 0 48px; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: .08em; }
+    .brand img { width: 42px; height: 42px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+    .top a { color: var(--muted); text-decoration: none; font-size: 14px; }
+    .hero { display: grid; grid-template-columns: 1.12fr .88fr; gap: 56px; align-items: center; min-height: 72vh; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 9px; padding: 8px 15px; border-radius: 99px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.82); font-size: 13px; letter-spacing: .08em;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 14px var(--mint); }
+    h1 { margin: 30px 0 8px; font-size: clamp(64px, 10vw, 118px); line-height: .98; letter-spacing: .1em; font-weight: 800; background: linear-gradient(90deg, #fff, #d9fff5 58%, #9fe9d6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sub { font-size: clamp(19px, 2.5vw, 27px); letter-spacing: .08em; color: rgba(255,255,255,.9); }
+    .desc { margin-top: 20px; max-width: 610px; font-size: 16px; line-height: 1.9; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 21px; border-radius: 99px; text-decoration: none; font-size: 14px; font-weight: 600; transition: transform .2s ease, background .2s ease; }
+    .btn:hover { transform: translateY(-2px); }
+    .primary { color: #11223a; background: linear-gradient(135deg, #d9fff5, #9fe9d6); }
+    .ghost { color: var(--ink); background: rgba(255,255,255,.08); border: 1px solid var(--line); }
+    .phone {
+      justify-self: center; width: min(330px, 82vw); border-radius: 42px; padding: 11px;
+      background: linear-gradient(145deg, rgba(255,255,255,.23), rgba(255,255,255,.07));
+      border: 1px solid rgba(255,255,255,.3);
+      box-shadow: 0 40px 110px rgba(0,0,0,.38);
+      transform: rotate(2deg);
+    }
+    .phone img { display: block; width: 100%; border-radius: 32px; }
+    .section-title { margin: 18px 0 18px; font-size: 15px; letter-spacing: .16em; color: rgba(255,255,255,.54); }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .card {
+      padding: 21px 19px; border-radius: 22px; background: rgba(255,255,255,.075);
+      border: 1px solid var(--line); backdrop-filter: blur(18px);
+    }
+    .card .icon { font-size: 24px; margin-bottom: 14px; }
+    .card h3 { margin: 0 0 8px; font-size: 16px; }
+    .card p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted); }
+    footer { margin-top: 46px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 1.8; color: rgba(255,255,255,.48); }
+    footer a { color: rgba(255,255,255,.72); text-decoration: none; }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; padding: 46px 0 34px; gap: 36px; }
+      .phone { order: -1; width: min(260px, 72vw); }
+      .cards { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 520px) {
+      .wrap { width: min(100% - 28px, 1120px); padding-top: 28px; }
+      .top .top-link { display: none; }
+      .cards { grid-template-columns: 1fr; }
+      .desc { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="icon.png" alt="心屿图标">心屿 · ISLE</div>
+    <a class="top-link" href="https://github.com/ynamlu/isle" target="_blank" rel="noopener">GitHub ↗</a>
+  </header>
+
+  <main class="hero">
+    <div>
+      <div class="badge"><span class="dot"></span>一座会记住你的心灵小岛</div>
+      <h1>心屿</h1>
+      <div class="sub">把情绪说出来，慢慢理清楚。</div>
+      <p class="desc">
+        心屿是一款面向大学生的 AI 情绪支持应用。闺蜜、老师、家人三种角色，
+        8 个预设场景，本地长期记忆，以及在高危情绪时优先转介真人的安全路由。
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/ynamlu/isle" target="_blank" rel="noopener">了解项目</a>
+        <a class="btn ghost" href="mailto:ynawst@foxmail.com">联系开发者</a>
+      </div>
+    </div>
+    <div class="phone"><img src="screenshot.png" alt="心屿首页"></div>
+  </main>
+
+  <div class="section-title">WHY ISLE · 为什么是心屿</div>
+  <section class="cards">
+    <article class="card"><div class="icon">🫧</div><h3>本地记忆</h3><p>端侧向量检索，角色记住你说过的事，记忆默认留在手机里。</p></article>
+    <article class="card"><div class="icon">🛟</div><h3>安全边界</h3><p>高危/危机表达暂停角色扮演，优先提供 12356、120/110 等真人资源。</p></article>
+    <article class="card"><div class="icon">🫂</div><h3>三角色</h3><p>闺蜜、老师、家人，不提供恋人角色，聚焦情绪支持而非恋爱陪伴。</p></article>
+    <article class="card"><div class="icon">🌙</div><h3>四栏陪伴</h3><p>首页、场景、记忆、我的。把“从哪开始”变成一件不需要思考的事。</p></article>
+  </section>
+
+  <footer>
+    <div>心屿 · 不是心理咨询或医疗诊断工具，不能替代真人帮助。<br>如果你正经历危机，请联系 12356 / 120 / 110 或学校心理中心。</div>
+    <div>沧州交通学院 · 软件工程 2410 · 吴思彤<br><a href="mailto:ynawst@foxmail.com">ynawst@foxmail.com</a></div>
+  </footer>
+</div>
+</body>
+</html>

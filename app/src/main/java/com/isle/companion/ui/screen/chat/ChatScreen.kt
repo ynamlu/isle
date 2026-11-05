@@ -1,5 +1,9 @@
 package com.isle.companion.ui.screen.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
@@ -34,6 +40,8 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -59,7 +67,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,6 +83,9 @@ import com.isle.companion.ui.theme.IsleRadius
 import com.isle.companion.ui.theme.liquidGlass
 import com.isle.companion.ui.theme.liquidGlassSource
 import com.isle.companion.ui.theme.rememberLiquidGlassState
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -84,6 +98,10 @@ import com.isle.companion.ui.component.CharacterAvatar
 import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.component.ImageViewerDialog
 import com.isle.companion.ui.component.rememberImagePicker
+import com.isle.companion.ui.journal.JournalSaver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.isle.companion.ui.theme.IsleUserBubbleBrush
 import com.isle.companion.ui.theme.isleBackground
 import com.isle.companion.ui.theme.rememberGlassColors
@@ -117,7 +135,33 @@ fun ChatScreen(
     val assessment by viewModel.assessment.collectAsState()
     val safetyAlert by viewModel.safetyAlert.collectAsState()
     val agentTrace by viewModel.agentTrace.collectAsState()
+    val journalGenerating by viewModel.journalGenerating.collectAsState()
+    val journalImage by viewModel.journalImage.collectAsState()
+    val journalError by viewModel.journalError.collectAsState()
     val scenario = viewModel.activeScenario
+    val scope = rememberCoroutineScope()
+
+    fun saveJournal(file: File) {
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { JournalSaver.saveToGallery(context, file) }
+            Toast.makeText(
+                context,
+                if (ok) "已保存到相册：Pictures/心屿" else "保存失败，请稍后重试",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val file = journalImage
+        if (granted && file != null) {
+            saveJournal(file)
+        } else if (!granted) {
+            Toast.makeText(context, "需要存储权限才能保存图片", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
@@ -129,6 +173,13 @@ fun ChatScreen(
     val hazeState = rememberLiquidGlassState()
 
     val accent = relationColor(character?.relationType ?: "custom")
+
+    LaunchedEffect(journalError) {
+        journalError?.let {
+            snackbarHostState.showSnackbar(it, withDismissAction = true)
+            viewModel.dismissJournalError()
+        }
+    }
 
     LaunchedEffect(error) {
         error?.let {
@@ -238,6 +289,78 @@ fun ChatScreen(
         )
     }
 
+    if (journalGenerating) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("正在生成情绪手账") },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("把这段对话里值得留下的那句话，收进一张手账。")
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    journalImage?.let { file ->
+        Dialog(
+            onDismissRequest = viewModel::dismissJournal,
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                shape = RoundedCornerShape(26.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AsyncImage(
+                        model = file,
+                        contentDescription = "情绪手账",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 620.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        TextButton(
+                            onClick = viewModel::dismissJournal,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("关闭") }
+                        Button(
+                            onClick = {
+                                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    storagePermissionLauncher.launch(
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    )
+                                } else {
+                                    saveJournal(file)
+                                }
+                            },
+                            modifier = Modifier.weight(1.4f)
+                        ) { Text("保存图片") }
+                    }
+                }
+            }
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -285,6 +408,12 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = viewModel::generateJournal,
+                        enabled = !isStreaming && !journalGenerating
+                    ) {
+                        Icon(Icons.Filled.AutoAwesome, contentDescription = "生成情绪手账")
+                    }
                     IconButton(onClick = { showTraceDialog = true }) {
                         Icon(Icons.Filled.Shield, contentDescription = "安全与生成说明")
                     }
@@ -390,6 +519,11 @@ fun ChatScreen(
                             label = { Text("场景 · ${scenario.title}") }
                         )
                     }
+                    AssistChip(
+                        onClick = viewModel::generateJournal,
+                        enabled = !isStreaming && !journalGenerating,
+                        label = { Text("生成手账") }
+                    )
                 }
                 Text(
                     text = when (mode) {

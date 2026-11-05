@@ -36,3 +36,7 @@ AI_API_KEY=sk-你的密钥
 # AI_BASE_URL=http://10.0.2.2:11434/v1
 # AI_MODEL=qwen2.5:7b
 # AI_API_KEY=
+
+# ===== 情绪手账二维码 =====
+# 部署 share/index.html 后，把地址填在这里；不填则默认指向 GitHub 仓库。
+# SHARE_QR_URL=https://你的域名/

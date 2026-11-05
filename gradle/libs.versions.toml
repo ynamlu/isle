@@ -15,6 +15,7 @@ serialization = "1.11.0"
 coil = "3.4.0"
 onnxruntime = "1.31.0"
 haze = "2.0.1"
+zxing = "3.5.3"
 junitExt = "1.3.0"
 testRunner = "1.7.0"
 junit = "4.13.2"
@@ -51,6 +52,7 @@ onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 haze-blur = { group = "dev.chrisbanes.haze", name = "haze-blur", version.ref = "haze" }
 haze-blur-materials = { group = "dev.chrisbanes.haze", name = "haze-blur-materials", version.ref = "haze" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitExt" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }

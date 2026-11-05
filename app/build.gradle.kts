@@ -31,6 +31,7 @@ val aiBaseUrl = localProp("AI_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE")
     .ifEmpty { if (legacyDeepSeekMode) "https://api.deepseek.com/v1" else "" }
 val aiModel = localProp("AI_MODEL", "OPENAI_MODEL", "AI_MODEL_ID")
     .ifEmpty { if (legacyDeepSeekMode) "deepseek-flash" else "" }
+val shareQrUrl = localProp("SHARE_QR_URL").ifEmpty { "https://github.com/ynamlu/isle" }
 
 /** 转义为 BuildConfig（Java 源码）中的字符串字面量，避免地址/Key 中的特殊字符破坏生成。 */
 fun buildConfigStringLiteral(value: String): String = buildString {
@@ -56,14 +57,15 @@ android {
         applicationId = "com.isle.companion"
         minSdk = 26
         targetSdk = 37
-        versionCode = 12
-        versionName = "2.2.4"
+        versionCode = 13
+        versionName = "2.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // 内置模型服务配置：未留空时作为应用默认值，用户可在设置页覆盖。
         buildConfigField("String", "DEMO_AI_BASE_URL", buildConfigStringLiteral(aiBaseUrl))
         buildConfigField("String", "DEMO_AI_MODEL", buildConfigStringLiteral(aiModel))
         buildConfigField("String", "DEMO_AI_API_KEY", buildConfigStringLiteral(aiApiKey))
+        buildConfigField("String", "SHARE_QR_URL", buildConfigStringLiteral(shareQrUrl))
     }
 
     buildTypes {
@@ -137,6 +139,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.serialization.json)
+
+    // 情绪手账二维码
+    implementation(libs.zxing.core)
 
     // 液态玻璃（真实背景模糊）
     implementation(libs.haze)

@@ -3,6 +3,7 @@ package com.isle.companion.ui.screen.chat
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isle.companion.BuildConfig
 import com.isle.companion.data.local.entity.CharacterEntity
 import com.isle.companion.data.local.entity.MessageEntity
 import com.isle.companion.data.prefs.UserProfile
@@ -10,6 +11,7 @@ import com.isle.companion.data.remote.OpenAiException
 import com.isle.companion.di.AppContainer
 import com.isle.companion.domain.chat.AgentAction
 import com.isle.companion.domain.chat.ConversationOrchestrator
+import com.isle.companion.domain.journal.JournalEntry
 import com.isle.companion.domain.prompt.PromptBuilder
 import com.isle.companion.domain.safety.ConversationMode
 import com.isle.companion.domain.safety.SafetyAlert
@@ -19,12 +21,15 @@ import com.isle.companion.domain.safety.SafetyEngine
 import com.isle.companion.domain.safety.ValidationIssue
 import com.isle.companion.domain.scenario.Scenario
 import com.isle.companion.domain.scenario.ScenarioCatalog
+import com.isle.companion.ui.journal.JournalImageGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.sse.EventSource
 import java.io.File
 import java.io.IOException
@@ -72,6 +77,15 @@ class ChatViewModel(
 
     private val _agentTrace = MutableStateFlow<String?>(null)
     val agentTrace: StateFlow<String?> = _agentTrace.asStateFlow()
+
+    private val _journalGenerating = MutableStateFlow(false)
+    val journalGenerating: StateFlow<Boolean> = _journalGenerating.asStateFlow()
+
+    private val _journalImage = MutableStateFlow<File?>(null)
+    val journalImage: StateFlow<File?> = _journalImage.asStateFlow()
+
+    private val _journalError = MutableStateFlow<String?>(null)
+    val journalError: StateFlow<String?> = _journalError.asStateFlow()
 
     val activeScenario: Scenario? get() = scenario
 
@@ -186,6 +200,71 @@ class ChatViewModel(
                 _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
             }
         }
+    }
+
+    /**
+     * 结束一段对话，提炼金句并生成情绪手账图。
+     * 有网络时由 LLM 提炼；失败或未配置模型时回退到最后一条助手回复。
+     */
+    fun generateJournal() {
+        if (_isStreaming.value || _journalGenerating.value) return
+        viewModelScope.launch {
+            val messages = _messages.value
+            val userTurns = messages.count { it.role == "user" && it.content.isNotBlank() }
+            if (userTurns < 2) {
+                _journalError.value = "再多聊几句，才能提炼出属于你的金句"
+                return@launch
+            }
+            if (messages.takeLast(20).any {
+                    it.role == "user" && SafetyEngine.assess(it.content).needsSafetyIntervention
+                }
+            ) {
+                _journalError.value = "这段对话涉及高风险内容，先照顾好自己，暂不生成手账"
+                return@launch
+            }
+
+            _journalGenerating.value = true
+            _journalError.value = null
+            try {
+                val character = _character.value ?: return@launch
+                val settings = container.settingsRepository.settings.first()
+                val entry = withContext(Dispatchers.IO) {
+                    if (settings.isConfigured) {
+                        runCatching {
+                            container.journalExtractor.extract(
+                                settings = settings,
+                                characterName = character.name,
+                                messages = messages
+                            )
+                        }.getOrNull() ?: container.journalExtractor.fallback(messages)
+                    } else {
+                        container.journalExtractor.fallback(messages)
+                    }
+                }
+                val file = withContext(Dispatchers.IO) {
+                    JournalImageGenerator.generate(
+                        context = container.context,
+                        entry = entry,
+                        characterName = character.name,
+                        qrUrl = BuildConfig.SHARE_QR_URL
+                    )
+                }
+                _journalImage.value = file
+            } catch (t: Throwable) {
+                _journalError.value = "手账生成失败，请稍后重试"
+            } finally {
+                _journalGenerating.value = false
+            }
+        }
+    }
+
+    fun dismissJournal() {
+        _journalImage.value?.delete()
+        _journalImage.value = null
+    }
+
+    fun dismissJournalError() {
+        _journalError.value = null
     }
 
     /** 清空当前角色的会话与聊天图片。 */

@@ -4,6 +4,11 @@
     <!-- 网络仅用于用户主动发送消息；不声明会造成依赖库被裁剪后直接断网 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Android 8/9 保存手账到相册需要；Android 10+ 使用 MediaStore 分区存储 -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <application
         android:name=".IsleApp"
         android:allowBackup="false"
