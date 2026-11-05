@@ -292,7 +292,7 @@ Isle/
 │   │   │   ├── prefs/                       # DataStore：配置 / 资料
 │   │   │   ├── remote/                      # OpenAI 兼容客户端 / SSE
 │   │   │   ├── repository/                  # 角色 / 会话 / 记忆
-│   │   │   └── demo/                        # 演示数据 / 旧数据迁移
+│   │   │   └── demo/                        # 演示数据
 │   │   ├── domain/
 │   │   │   ├── chat/                        # 多智能体编排
 │   │   │   ├── safety/                      # 风险检测 / 输出校验
@@ -340,7 +340,7 @@ Isle/
 | [`docs/技术文档.md`](docs/技术文档.md) · [PDF](docs/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、可复现性 |
 | [`docs/用户使用说明书.md`](docs/用户使用说明书.md) · [PDF](docs/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/产品说明.md`](docs/产品说明.md) · [PDF](docs/产品说明.pdf) | 产品定位、用户旅程、设计取舍、路线图 |
-| [`docs/开发与AI协同全记录.md`](docs/开发与AI协同全记录.md) · [PDF](docs/开发与AI协同全记录.pdf) | 从 v1.0 到 v2.1 的开发与 AI 协同记录 |
+| [`docs/开发与AI协同全记录.md`](docs/开发与AI协同全记录.md) · [PDF](docs/开发与AI协同全记录.pdf) | 开发过程与 AI 协同记录 |
 
 ---
 
