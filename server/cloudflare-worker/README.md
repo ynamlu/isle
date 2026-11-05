@@ -25,17 +25,13 @@ cd server/cloudflare-worker
 wrangler deploy
 ```
 
-部署成功后会得到：
-
-```text
-https://isle-proxy.<你的子域>.workers.dev
-```
-
-本项目已绑定自定义域名：
+部署成功后，Worker 名称会出现在 Cloudflare 控制台。本项目已关闭 `workers.dev`，只使用自定义域名：
 
 ```text
 https://isle-proxy.ynatech.xyz
 ```
+
+未绑定自定义域名时，也可以在 `wrangler.toml` 中显式设置 `workers_dev = true` 后使用 `workers.dev` 地址。
 
 已启用 Cloudflare Smart Placement，尽量把 Worker 调度到靠近上游的区域。
 
