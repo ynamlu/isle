@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restore
@@ -71,7 +72,9 @@ fun SettingsScreen(
     onOpenUserProfile: () -> Unit,
     onOpenModelConfig: () -> Unit,
     onOpenStyleConfig: () -> Unit,
-    onOpenTechInfo: () -> Unit
+    onOpenTechInfo: () -> Unit,
+    onOpenAccount: () -> Unit,
+    isTab: Boolean = false
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: SettingsViewModel = viewModel(
@@ -82,8 +85,9 @@ fun SettingsScreen(
     )
     val settings by viewModel.settings.collectAsState()
     val profile by profileViewModel.profile.collectAsState()
-    var showAgeDialog by remember { mutableStateOf(false) }
+    val account by container.localAuthRepository.account.collectAsState()
     var showDemoResetDialog by remember { mutableStateOf(false) }
+    var showSafetyDialog by remember { mutableStateOf(false) }
 
     val hazeState = rememberLiquidGlassState()
 
@@ -93,10 +97,12 @@ fun SettingsScreen(
             TopAppBar(
                 modifier = Modifier.liquidGlass(hazeState),
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                title = { Text("设置") },
+                title = { Text(if (isTab) "我的" else "设置") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    if (!isTab) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        }
                     }
                 }
             )
@@ -117,27 +123,55 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ===== 关于心屿（直接展示） =====
-            AboutContent()
-
-            Spacer(Modifier.height(4.dp))
-            HorizontalDivider()
+            if (isTab) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(
+                            text = account?.nickname ?: "游客模式",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = if (account != null) {
+                                "本地匿名账户 · 数据默认只在本机"
+                            } else {
+                                "点击「账户与安全」创建本地账户"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                HorizontalDivider()
+            } else {
+                // ===== 关于心屿（设置详情页直接展示） =====
+                AboutContent()
+                Spacer(Modifier.height(4.dp))
+                HorizontalDivider()
+            }
 
             // ===== 二级页面入口 =====
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                SettingsRow(
+                    icon = Icons.Filled.Lock,
+                    tint = IslePurple,
+                    title = "账户与安全",
+                    subtitle = account?.let { "本地账户 · ${it.nickname}" } ?: "游客模式 · 点击创建本地账户",
+                    onClick = onOpenAccount
+                )
+            }
+
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 SettingsRow(
                     icon = Icons.Filled.Person,
                     tint = IslePurple,
                     title = "我的资料",
-                    subtitle = buildString {
-                        if (profile.isMinor) append("青少年模式 · ")
-                        append(
-                            if (profile.isFilled) {
-                                "已填写" + (if (profile.name.isNotBlank()) " · " + profile.name else "")
-                            } else {
-                                "填写后所有角色都能更快了解你"
-                            }
-                        )
+                    subtitle = if (profile.isFilled) {
+                        "已填写" + (if (profile.name.isNotBlank()) " · " + profile.name else "")
+                    } else {
+                        "填写后所有角色都能更快了解你"
                     },
                     onClick = onOpenUserProfile
                 )
@@ -146,10 +180,10 @@ fun SettingsScreen(
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 SettingsRow(
                     icon = Icons.Filled.Shield,
-                    tint = IsleGold,
-                    title = "年龄分组",
-                    subtitle = if (profile.isMinor) "青少年模式" else "已满 18 周岁",
-                    onClick = { showAgeDialog = true }
+                    tint = MaterialTheme.colorScheme.error,
+                    title = "心理援助资源",
+                    subtitle = "12356 · 120/110 · 学校心理中心",
+                    onClick = { showSafetyDialog = true }
                 )
             }
 
@@ -198,7 +232,9 @@ fun SettingsScreen(
             }
 
             Text(
-                text = "对话记录与密钥仅保存在本机；发送消息时，内容会传输至你配置的模型服务用于生成回复。",
+                text = "对话记录与密钥仅保存在本机；发送消息时，内容会传输至你配置的模型服务用于生成回复。\n\n" +
+                    "心屿不是心理咨询或医疗诊断工具。如果你正经历强烈痛苦或危机，" +
+                    "请联系 12356 心理援助热线、学校心理中心，或拨打 120/110。",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -208,19 +244,22 @@ fun SettingsScreen(
         }
     }
 
-    if (showAgeDialog) {
+    if (showSafetyDialog) {
         AlertDialog(
-            onDismissRequest = { showAgeDialog = false },
-            title = { Text("重新选择年龄分组") },
-            text = { Text("确认后会回到年龄确认页；已保存的角色、聊天和记忆不会删除。") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showAgeDialog = false
-                    viewModel.resetAgeGroup()
-                }) { Text("重新选择") }
+            onDismissRequest = { showSafetyDialog = false },
+            title = { Text("如果现在很难受") },
+            text = {
+                Text(
+                    "你不需要一个人扛着。可以联系：\n\n" +
+                        "· 全国心理援助热线 12356（以当地开通情况为准）\n" +
+                        "· 紧急情况 120 / 110\n" +
+                        "· 学校心理中心 / 辅导员\n" +
+                        "· 身边可信任的人\n\n" +
+                        "心屿不是心理咨询或医疗诊断工具；危机时请优先联系真人。"
+                )
             },
-            dismissButton = {
-                TextButton(onClick = { showAgeDialog = false }) { Text("取消") }
+            confirmButton = {
+                TextButton(onClick = { showSafetyDialog = false }) { Text("我知道了") }
             }
         )
     }

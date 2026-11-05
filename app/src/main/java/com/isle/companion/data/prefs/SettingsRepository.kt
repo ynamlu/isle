@@ -48,4 +48,6 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun updateMaxTokens(value: Int) =
         context.settingsDataStore.edit { it[Keys.MAX_TOKENS] = value.coerceIn(128, 8192) }
+
+    suspend fun clear() = context.settingsDataStore.edit { it.clear() }
 }

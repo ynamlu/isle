@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 data class CharacterEditState(
     val id: Long = 0,
     val name: String = "",
-    // 默认使用中性关系类型；「恋人」等亲密定位在青少年模式下不出现
+    // 默认使用中性关系类型；「恋人」定位已从产品中下线
     val relationType: String = "bestie",
     val personality: String = "",
     val bio: String = "",

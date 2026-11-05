@@ -15,22 +15,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +50,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.isle.companion.data.local.entity.CharacterEntity
 import com.isle.companion.di.appContainer
+import com.isle.companion.domain.scenario.Scenario
+import com.isle.companion.domain.scenario.ScenarioCatalog
 import com.isle.companion.ui.component.CharacterAvatar
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleBrandBrush
@@ -61,6 +68,7 @@ import com.isle.companion.ui.theme.relationColor
 @Composable
 fun CharacterListScreen(
     onOpenChat: (Long) -> Unit,
+    onOpenScenario: (Long, String) -> Unit,
     onCreate: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -70,6 +78,9 @@ fun CharacterListScreen(
     )
     val characters by viewModel.characters.collectAsState()
     val hazeState = rememberLiquidGlassState()
+    var pendingScenario by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<Scenario?>(null)
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -109,6 +120,26 @@ fun CharacterListScreen(
 
             item {
                 Text(
+                    text = "今天想聊什么",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = IsleSpacing.xs, top = IsleSpacing.sm)
+                )
+            }
+
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(IsleSpacing.sm),
+                    contentPadding = PaddingValues(horizontal = IsleSpacing.xs)
+                ) {
+                    items(ScenarioCatalog.all, key = { it.id }) { scenario ->
+                        ScenarioChip(scenario = scenario, onClick = { pendingScenario = scenario })
+                    }
+                }
+            }
+
+            item {
+                Text(
                     text = "我的陪伴者 · ${characters.size}",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -127,6 +158,65 @@ fun CharacterListScreen(
             }
 
             item { AddCharacterCard(onClick = onCreate) }
+        }
+    }
+
+    pendingScenario?.let { scenario ->
+        AlertDialog(
+            onDismissRequest = { pendingScenario = null },
+            title = { Text("让谁来陪你？") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = scenario.title + " · " + scenario.subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    characters.forEach { character ->
+                        TextButton(
+                            onClick = {
+                                pendingScenario = null
+                                onOpenScenario(character.id, scenario.id)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("${character.name} · ${relationLabel(character.relationType)}")
+                        }
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
+}
+
+@Composable
+private fun ScenarioChip(scenario: Scenario, onClick: () -> Unit) {
+    Surface(
+        shape = IsleRadius.card,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        shadowElevation = 0.dp,
+        modifier = Modifier.width(168.dp),
+        onClick = onClick
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(text = scenario.emoji, style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = scenario.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = scenario.subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -264,8 +354,9 @@ private fun AddCharacterCard(onClick: () -> Unit) {
 }
 
 private fun relationLabel(type: String): String = when (type) {
-    "love" -> "恋人"
+    "love" -> "旧版角色"
     "bestie" -> "闺蜜"
+    "teacher" -> "老师"
     "friend" -> "朋友"
     "family" -> "家人"
     else -> "自定义"

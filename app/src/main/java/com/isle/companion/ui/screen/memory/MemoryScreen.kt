@@ -16,12 +16,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +50,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.isle.companion.ui.theme.isleBackground
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.di.appContainer
+import com.isle.companion.data.local.entity.MemoryEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +64,19 @@ fun MemoryScreen(
         factory = viewModelFactory { initializer { MemoryViewModel(container, characterId) } }
     )
     val memories by viewModel.memories.collectAsState()
+    val allMemories by viewModel.allMemories.collectAsState()
+    val query by viewModel.query.collectAsState()
     var showClearConfirm by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<MemoryEntity?>(null) }
+    var editText by remember { mutableStateOf("") }
+
+    val weekStart = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+    val weekNew = allMemories.count { it.createdAt >= weekStart }
+    val topCategory = allMemories
+        .groupingBy { categoryLabel(it.category) }
+        .eachCount()
+        .maxByOrNull { it.value }
+        ?.key
 
     if (showClearConfirm) {
         AlertDialog(
@@ -79,6 +95,31 @@ fun MemoryScreen(
         )
     }
 
+    editing?.let { memory ->
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text("编辑记忆") },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    label = { Text("TA 记住的事") },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.update(memory, editText)
+                    editing = null
+                }) { Text("保存") }
+            },
+            dismissButton = {
+                TextButton(onClick = { editing = null }) { Text("取消") }
+            }
+        )
+    }
+
     val hazeState = rememberLiquidGlassState()
 
     Scaffold(
@@ -87,7 +128,7 @@ fun MemoryScreen(
             TopAppBar(
                 modifier = Modifier.liquidGlass(hazeState),
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                title = { Text("长期记忆") },
+                title = { Text("记忆管理") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -132,6 +173,47 @@ fun MemoryScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            item {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text("本周回顾", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = if (weekNew == 0) {
+                                "这周还没有新的记忆，多聊几句吧"
+                            } else {
+                                "这周新记住 $weekNew 件事" +
+                                    (topCategory?.let { " · 最常出现：$it" } ?: "")
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            item {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = viewModel::updateQuery,
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    placeholder = { Text("搜索 TA 记住的事") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (memories.isEmpty()) {
+                item {
+                    Text(
+                        text = if (query.isBlank()) "还没有长期记忆" else "没有找到相关记忆",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
             items(memories, key = { it.id }) { memory ->
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -152,6 +234,12 @@ fun MemoryScreen(
                                 modifier = Modifier.padding(top = 6.dp)
                             )
                         }
+                        IconButton(onClick = {
+                            editing = memory
+                            editText = memory.content
+                        }) {
+                            Icon(Icons.Filled.Edit, contentDescription = "编辑")
+                        }
                         IconButton(onClick = { viewModel.delete(memory) }) {
                             Icon(Icons.Filled.DeleteOutline, contentDescription = "删除")
                         }
@@ -160,12 +248,4 @@ fun MemoryScreen(
             }
         }
     }
-}
-
-private fun categoryLabel(category: String): String = when (category) {
-    "preference" -> "喜好"
-    "event" -> "经历"
-    "relationship" -> "关系"
-    "promise" -> "约定"
-    else -> "信息"
 }

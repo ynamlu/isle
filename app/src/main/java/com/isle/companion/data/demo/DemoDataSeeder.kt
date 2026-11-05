@@ -12,7 +12,7 @@ import java.io.File
 
 /**
  * 演示数据：
- * - 首次启动写入 3 个角色、6 条记忆和一段可触发记忆召回的对话；
+ * - 首次启动写入 3 个角色（闺蜜/家人/老师）、6 条记忆和一段可触发记忆召回的对话；
  * - 设置页的“重置演示数据”会清空后重新写入。
  */
 class DemoDataSeeder(
@@ -26,7 +26,50 @@ class DemoDataSeeder(
 ) {
 
     suspend fun bootstrap() {
+        migrateLegacyDemo()
         seedIfNeeded()
+        ensureDemoCharacters()
+    }
+
+    /**
+     * 兼容 v1 的演示数据：
+     * - 旧「阿岸（恋人）」→「阿岚（家人）」；
+     * - 旧「林深（朋友）」→「林深（老师）」。
+     * 只匹配旧演示角色的固定名称、关系和简介，避免误改用户自建角色。
+     */
+    private suspend fun migrateLegacyDemo() {
+        characterDao.all().forEach { character ->
+            when {
+                character.name == "阿岸" &&
+                    character.relationType == "love" &&
+                    character.bio.contains("海边灯塔") -> {
+                    characterRepository.save(
+                        character.copy(
+                            name = "阿岚",
+                            relationType = "family",
+                            personality = "稳重、耐心，不会急着说教，习惯先把事情听完",
+                            bio = "像家里那个总在厨房留一盏灯的人，记得你爱吃什么，也记得你怕什么",
+                            speakingStyle = "语气温和，偶尔会问「吃饭了吗」，但不会用关心压你",
+                            greeting = "回来啦。今天累不累？先坐一会儿，慢慢说。"
+                        )
+                    )
+                }
+
+                character.name == "林深" &&
+                    character.relationType == "friend" &&
+                    character.bio.contains("大学同学") -> {
+                    characterRepository.save(
+                        character.copy(
+                            relationType = "teacher",
+                            personality = "温和、有条理，擅长把大问题拆成可以开始的小步骤",
+                            bio = "大学里的学业导师，见过很多学生在期末和毕业前焦虑，不会用成绩定义一个人",
+                            speakingStyle = "先共情，再提问；喜欢说「我们先不急着解决全部」",
+                            greeting = "我在。最近是学习上的事，还是心里有些乱？都可以说。"
+                        )
+                    )
+                }
+            }
+        }
     }
 
     suspend fun seedIfNeeded() {
@@ -50,39 +93,9 @@ class DemoDataSeeder(
     }
 
     private suspend fun seed() {
-        val xiaoyuId = characterRepository.save(
-            CharacterEntity(
-                name = "小屿",
-                relationType = "bestie",
-                personality = "温柔、细心、有耐心，愿意倾听你的所有心事",
-                bio = "住在心屿上的人，喜欢在傍晚的海边散步，也喜欢听你分享一天的喜怒哀乐",
-                speakingStyle = "语气亲近自然，喜欢用「嗯嗯」「其实呀」这样的口语，会记得你说过的事",
-                greeting = "嗨，你来啦～今天过得怎么样呀？",
-                isDefault = true
-            )
-        )
-
-        characterRepository.save(
-            CharacterEntity(
-                name = "阿岸",
-                relationType = "love",
-                personality = "安静、克制，不擅长说漂亮话，但会把你说过的细节记很久",
-                bio = "在海边灯塔做记录员，习惯把想说的话写进值班日志里",
-                speakingStyle = "句子偏短，语气平稳，偶尔会用海和天气作比喻",
-                greeting = "你来了。今天海面很安静，想和我说什么？"
-            )
-        )
-
-        characterRepository.save(
-            CharacterEntity(
-                name = "林深",
-                relationType = "friend",
-                personality = "爽朗、爱开玩笑，但认真的时候很可靠",
-                bio = "大学同学，毕业后去了另一座城市，偶尔深夜发来消息",
-                speakingStyle = "口语化，喜欢用「哈哈哈」「说真的」开头",
-                greeting = "嘿，好久不见！最近怎么样？"
-            )
-        )
+        val xiaoyuId = createXiaoyu()
+        createAlan()
+        createLinshen()
 
         val memories = listOf(
             Triple("我记得你的生日是 7 月 20 日", "basic", 0.9f),
@@ -120,4 +133,53 @@ class DemoDataSeeder(
             "焦虑说明你很在意这件事。我们把它拆小一点：今天只做一件最要紧的事，剩下的明天再说，好不好？"
         )
     }
+
+    /**
+     * 如果用户删除了某个演示角色，下次启动时补齐；
+     * 只有当前角色全部是演示角色时才补，避免影响用户自建角色。
+     */
+    private suspend fun ensureDemoCharacters() {
+        val characters = characterDao.all()
+        if (characters.isEmpty()) return
+        val demoNames = setOf("小屿", "林深", "阿岚", "阿岸")
+        if (characters.any { it.name !in demoNames }) return
+
+        if (characters.none { it.name == "小屿" }) createXiaoyu()
+        if (characters.none { it.name == "阿岚" || it.name == "阿岸" }) createAlan()
+        if (characters.none { it.name == "林深" }) createLinshen()
+    }
+
+    private suspend fun createXiaoyu(): Long = characterRepository.save(
+        CharacterEntity(
+            name = "小屿",
+            relationType = "bestie",
+            personality = "温柔、细心、有耐心，愿意倾听你的所有心事",
+            bio = "住在心屿上的人，喜欢在傍晚的海边散步，也喜欢听你分享一天的喜怒哀乐",
+            speakingStyle = "语气亲近自然，喜欢用「嗯嗯」「其实呀」这样的口语，会记得你说过的事",
+            greeting = "嗨，你来啦～今天过得怎么样呀？",
+            isDefault = true
+        )
+    )
+
+    private suspend fun createAlan(): Long = characterRepository.save(
+        CharacterEntity(
+            name = "阿岚",
+            relationType = "family",
+            personality = "稳重、耐心，不会急着说教，习惯先把事情听完",
+            bio = "像家里那个总在厨房留一盏灯的人，记得你爱吃什么，也记得你怕什么",
+            speakingStyle = "语气温和，偶尔会问「吃饭了吗」，但不会用关心压你",
+            greeting = "回来啦。今天累不累？先坐一会儿，慢慢说。"
+        )
+    )
+
+    private suspend fun createLinshen(): Long = characterRepository.save(
+        CharacterEntity(
+            name = "林深",
+            relationType = "teacher",
+            personality = "温和、有条理，擅长把大问题拆成可以开始的小步骤",
+            bio = "大学里的学业导师，见过很多学生在期末和毕业前焦虑，不会用成绩定义一个人",
+            speakingStyle = "先共情，再提问；喜欢说「我们先不急着解决全部」",
+            greeting = "我在。最近是学习上的事，还是心里有些乱？都可以说。"
+        )
+    )
 }

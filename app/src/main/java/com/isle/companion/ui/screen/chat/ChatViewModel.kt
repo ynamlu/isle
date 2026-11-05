@@ -8,7 +8,17 @@ import com.isle.companion.data.local.entity.MessageEntity
 import com.isle.companion.data.prefs.UserProfile
 import com.isle.companion.data.remote.OpenAiException
 import com.isle.companion.di.AppContainer
+import com.isle.companion.domain.chat.AgentAction
+import com.isle.companion.domain.chat.ConversationOrchestrator
 import com.isle.companion.domain.prompt.PromptBuilder
+import com.isle.companion.domain.safety.ConversationMode
+import com.isle.companion.domain.safety.SafetyAlert
+import com.isle.companion.domain.safety.ResponseValidator
+import com.isle.companion.domain.safety.SafetyAssessment
+import com.isle.companion.domain.safety.SafetyEngine
+import com.isle.companion.domain.safety.ValidationIssue
+import com.isle.companion.domain.scenario.Scenario
+import com.isle.companion.domain.scenario.ScenarioCatalog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +35,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ChatViewModel(
     private val container: AppContainer,
-    private val characterId: Long
+    private val characterId: Long,
+    scenarioId: String? = null
 ) : ViewModel() {
+
+    private val scenario: Scenario? = ScenarioCatalog.byId(scenarioId)
 
     private val _character = MutableStateFlow<CharacterEntity?>(null)
     val character: StateFlow<CharacterEntity?> = _character.asStateFlow()
@@ -46,6 +59,22 @@ class ChatViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _mode = MutableStateFlow(
+        if (scenario != null) ConversationMode.SCENARIO else ConversationMode.FREE
+    )
+    val mode: StateFlow<ConversationMode> = _mode.asStateFlow()
+
+    private val _assessment = MutableStateFlow<SafetyAssessment?>(null)
+    val assessment: StateFlow<SafetyAssessment?> = _assessment.asStateFlow()
+
+    private val _safetyAlert = MutableStateFlow<SafetyAlert?>(null)
+    val safetyAlert: StateFlow<SafetyAlert?> = _safetyAlert.asStateFlow()
+
+    private val _agentTrace = MutableStateFlow<String?>(null)
+    val agentTrace: StateFlow<String?> = _agentTrace.asStateFlow()
+
+    val activeScenario: Scenario? get() = scenario
+
     // 聊天图片保留较高分辨率，避免点开大图时糊
     private val chatImages = com.isle.companion.util.AvatarStorage(
         context = container.context,
@@ -54,6 +83,7 @@ class ChatViewModel(
     )
 
     private var eventSource: EventSource? = null
+    private var scenarioStep = 0
     private var streamingAssistantId: Long? = null
     private var streamingText: String = ""
     private var streamingFinished: AtomicBoolean? = null
@@ -64,12 +94,29 @@ class ChatViewModel(
             _character.value = entity
             _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
 
-            // 首次进入时发送角色开场白
-            if (_messages.value.isEmpty() && entity != null && entity.greeting.isNotBlank()) {
+            // 场景优先：直接由 AI 开口，用户不用先想“从哪说起”
+            val hasScenarioOpening = scenario != null &&
+                _messages.value.any { it.role == "assistant" && it.content == scenario.opening }
+            if (scenario != null && !hasScenarioOpening) {
+                container.chatRepository.addAssistantMessage(characterId, scenario.opening)
+                _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
+            } else if (_messages.value.isEmpty() && entity != null && entity.greeting.isNotBlank()) {
+                // 首次进入时发送角色开场白
                 container.chatRepository.addAssistantMessage(characterId, entity.greeting)
                 _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
             }
+            _agentTrace.value = "场景：${scenario?.title ?: "自由聊天"} · 等待输入"
         }
+    }
+
+    fun setMode(value: ConversationMode) {
+        if (value == ConversationMode.CRISIS) return
+        _mode.value = value
+        _safetyAlert.value = null
+    }
+
+    fun dismissSafetyAlert() {
+        _safetyAlert.value = null
     }
 
     fun updateInput(value: String) = _input.update { value }
@@ -125,10 +172,16 @@ class ChatViewModel(
         _isStreaming.value = false
         viewModelScope.launch {
             if (id != null) {
-                if (text.isBlank()) {
+                val validation = ResponseValidator.validate(text, _mode.value)
+                val finalText = if (validation.hasSevereIssue) {
+                    ResponseValidator.fallback(validation.issues)
+                } else {
+                    text
+                }
+                if (finalText.isBlank()) {
                     container.chatRepository.deleteMessage(id)
                 } else {
-                    container.chatRepository.updateContent(id, text)
+                    container.chatRepository.updateContent(id, finalText)
                 }
                 _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
             }
@@ -150,11 +203,42 @@ class ChatViewModel(
     private suspend fun sendInternal(text: String, imagePath: String?, appendUser: Boolean) {
         val character = _character.value ?: return
         val settings = container.settingsRepository.settings.first()
+        val plan = ConversationOrchestrator.plan(
+            text = text,
+            requestedMode = _mode.value,
+            scenario = scenario
+        )
+        val currentAssessment = plan.assessment
+        _assessment.value = currentAssessment
+
+        // 高危/紧急：不调用模型，不用角色扮演掩盖风险
+        if (plan.action != AgentAction.NORMAL) {
+            if (_isStreaming.value) return
+            if (appendUser) {
+                container.chatRepository.addUserMessage(characterId, text, imagePath)
+                _input.value = ""
+                _attachedImage.value = null
+            }
+            val crisis = plan.action == AgentAction.CRISIS
+            val reply = if (crisis) SafetyEngine.crisisMessage() else SafetyEngine.supportiveMessage()
+            container.chatRepository.addAssistantMessage(characterId, reply)
+            _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
+            _mode.value = plan.mode
+            _safetyAlert.value = SafetyAlert(
+                title = if (crisis) "先确认你的安全" else "我很在意你现在的状态",
+                message = reply,
+                isCrisis = crisis
+            )
+            _agentTrace.value = plan.trace + " · 未调用模型"
+            return
+        }
+
         if (!settings.isConfigured) {
             _error.value = "请先在设置中填写模型服务的 API Key 与接口地址"
             return
         }
         if (_isStreaming.value) return
+        _mode.value = plan.mode
 
         // 重试时把上一轮失败的用户消息及其后的残留一起截掉，避免 Prompt 重复
         val history = container.chatRepository.recent(characterId, HISTORY_LIMIT).let { list ->
@@ -192,8 +276,12 @@ class ChatViewModel(
             userText = text.ifBlank { "（用户发来了一张图片）" },
             imageFile = imagePath?.let { File(it) },
             userProfile = userProfile,
-            isMinor = userProfile.isMinor
+            mode = _mode.value,
+            scenario = scenario,
+            assessment = currentAssessment,
+            scenarioStep = scenarioStep
         )
+        _agentTrace.value = plan.trace + " · 人设：${character.name}"
 
         eventSource = container.openAiClient.stream(
             settings = settings,
@@ -208,17 +296,40 @@ class ChatViewModel(
                 // [DONE] 与 onClosed 可能先后各触发一次，只允许结算一次
                 if (!finished.compareAndSet(false, true)) return@stream
                 viewModelScope.launch {
-                    if (streamingText.isBlank()) {
+                    val validation = ResponseValidator.validate(streamingText, _mode.value)
+                    val finalText = if (validation.hasSevereIssue) {
+                        ResponseValidator.fallback(validation.issues)
+                    } else {
+                        streamingText
+                    }
+                    if (finalText.isBlank()) {
                         container.chatRepository.deleteMessage(assistantId)
                     } else {
-                        container.chatRepository.updateContent(assistantId, streamingText)
+                        container.chatRepository.updateContent(assistantId, finalText)
                     }
                     _messages.value = container.chatRepository.recent(characterId, MESSAGE_LIMIT)
                     _isStreaming.value = false
                     eventSource = null
                     streamingAssistantId = null
-                    if (streamingText.isNotBlank()) {
-                        extractMemories(text, streamingText, userProfile)
+                    _agentTrace.value = listOfNotNull(_agentTrace.value, validation.summary).joinToString(" · ")
+                    if (ValidationIssue.UNSAFE_METHOD in validation.issues) {
+                        _safetyAlert.value = SafetyAlert(
+                            title = "安全提示",
+                            message = ResponseValidator.fallback(validation.issues),
+                            isCrisis = true
+                        )
+                    }
+                    if (finalText.isNotBlank() &&
+                        _mode.value != ConversationMode.CRISIS &&
+                        _mode.value != ConversationMode.SAFETY &&
+                        !validation.hasSevereIssue
+                    ) {
+                        extractMemories(text, finalText, userProfile)
+                    }
+                    if (_mode.value == ConversationMode.SCENARIO && scenario != null &&
+                        scenario.steps.isNotEmpty()
+                    ) {
+                        scenarioStep = (scenarioStep + 1) % scenario.steps.size
                     }
                 }
             },
@@ -267,8 +378,7 @@ class ChatViewModel(
                 characterName = character.name,
                 userText = userText,
                 assistantText = assistantText,
-                userProfile = userProfile,
-                isMinor = userProfile.isMinor
+                userProfile = userProfile
             )
             extracted.forEach { memory ->
                 container.memoryRepository.add(

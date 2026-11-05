@@ -65,10 +65,10 @@ fun AboutContent(
                 Text("项目介绍", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "心屿是一款 AI 情感陪伴应用。你可以创建专属的陪伴角色——" +
-                        "恋人、闺蜜、朋友或家人，为 TA 设定性格、背景与说话方式，上传 TA 的模样。\n\n" +
-                        "TA 会记得你说过的话、喜欢的东西、在意的事。每一次聊天，TA 都带着对" +
-                        "你的了解出现，像一位认识很久的朋友，而不是每次都要重新认识的陌生人。",
+                    text = "心屿是一款面向大学生的情绪支持应用。你可以选择闺蜜、老师或家人" +
+                        "三种陪伴角色，也可以创建自己的角色，为 TA 设定性格、背景与说话方式。\n\n" +
+                        "TA 会记得你说过的话、在意的事。每一次聊天，TA 都带着对你的了解出现；" +
+                        "当你需要时，也可以用场景引导、树洞模式或呼吸练习，把情绪慢慢理清楚。",
                     style = MaterialTheme.typography.bodyMedium,
                     lineHeight = 24.sp
                 )

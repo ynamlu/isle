@@ -25,13 +25,8 @@ class CharacterVisibilityTest {
     )
 
     @Test
-    fun adultSeesAllCharacters() {
-        assertEquals(all, all.visibleFor(isMinor = false))
-    }
-
-    @Test
-    fun minorHidesLoveAndCustom() {
-        val visible = all.visibleFor(isMinor = true)
-        assertEquals(listOf("bestie", "friend", "family"), visible.map { it.relationType })
+    fun retiredLoveIsHidden() {
+        val visible = all.visibleFor()
+        assertEquals(listOf("bestie", "friend", "family", "custom"), visible.map { it.relationType })
     }
 }

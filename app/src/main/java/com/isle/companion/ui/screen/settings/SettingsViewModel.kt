@@ -118,10 +118,6 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _testMessage.value = null
     }
 
-    /** 回到年龄确认页，重新选择年龄段。 */
-    fun resetAgeGroup() = viewModelScope.launch {
-        container.userProfileRepository.clearAgeGroup()
-    }
 
     /** 演示数据：恢复演示角色、记忆与示例对话。 */
     fun resetDemoData() = viewModelScope.launch {

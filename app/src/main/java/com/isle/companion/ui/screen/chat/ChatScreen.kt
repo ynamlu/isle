@@ -3,6 +3,8 @@ package com.isle.companion.ui.screen.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +30,12 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,8 +64,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.isle.companion.ui.theme.IsleRadius
@@ -74,6 +78,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import coil3.compose.AsyncImage
 import com.isle.companion.data.local.entity.MessageEntity
 import com.isle.companion.di.appContainer
+import com.isle.companion.domain.safety.ConversationMode
+import com.isle.companion.domain.safety.SafetyEngine
 import com.isle.companion.ui.component.CharacterAvatar
 import com.isle.companion.ui.component.ImageViewerDialog
 import com.isle.companion.ui.component.rememberImagePicker
@@ -87,14 +93,17 @@ import java.io.File
 @Composable
 fun ChatScreen(
     characterId: Long,
+    scenarioId: String?,
     onBack: () -> Unit,
-    onEditCharacter: () -> Unit,
-    onOpenMemory: () -> Unit
+    onEditCharacter: () -> Unit
 ) {
     val container = LocalContext.current.appContainer
+    val context = LocalContext.current
     val viewModel: ChatViewModel = viewModel(
-        key = "chat_$characterId",
-        factory = viewModelFactory { initializer { ChatViewModel(container, characterId) } }
+        key = "chat_${characterId}_${scenarioId ?: "free"}",
+        factory = viewModelFactory {
+            initializer { ChatViewModel(container, characterId, scenarioId) }
+        }
     )
 
     val character by viewModel.character.collectAsState()
@@ -103,6 +112,11 @@ fun ChatScreen(
     val attachedImage by viewModel.attachedImage.collectAsState()
     val isStreaming by viewModel.isStreaming.collectAsState()
     val error by viewModel.error.collectAsState()
+    val mode by viewModel.mode.collectAsState()
+    val assessment by viewModel.assessment.collectAsState()
+    val safetyAlert by viewModel.safetyAlert.collectAsState()
+    val agentTrace by viewModel.agentTrace.collectAsState()
+    val scenario = viewModel.activeScenario
 
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
@@ -110,6 +124,7 @@ fun ChatScreen(
 
     var viewerImage by remember { mutableStateOf<String?>(null) }
     var showClearDialog by remember { mutableStateOf(false) }
+    var showTraceDialog by remember { mutableStateOf(false) }
     val hazeState = rememberLiquidGlassState()
 
     val accent = relationColor(character?.relationType ?: "custom")
@@ -166,6 +181,62 @@ fun ChatScreen(
         )
     }
 
+    safetyAlert?.let { alert ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissSafetyAlert,
+            title = { Text(alert.title) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(alert.message)
+                    Text(
+                        text = SafetyEngine.disclaimer(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissSafetyAlert) { Text("我知道了") }
+            },
+            dismissButton = if (alert.isCrisis) {
+                {
+                    TextButton(onClick = {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_DIAL,
+                                    android.net.Uri.parse("tel:12356")
+                                )
+                            )
+                        }
+                    }) { Text("拨打 12356") }
+                }
+            } else {
+                null
+            }
+        )
+    }
+
+    if (showTraceDialog) {
+        AlertDialog(
+            onDismissRequest = { showTraceDialog = false },
+            title = { Text("这次回复是怎么来的") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(agentTrace ?: "还没有生成记录")
+                    Text(
+                        text = "本机只展示结构化决策，不展示模型内部推理。",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTraceDialog = false }) { Text("知道了") }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -193,23 +264,31 @@ fun ChatScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = if (isStreaming) "正在输入…" else relationLabelOf(character?.relationType),
+                                text = when {
+                                    isStreaming -> "正在输入…"
+                                    scenario != null && mode == ConversationMode.SCENARIO ->
+                                        "场景 · ${scenario.title}"
+                                    mode == ConversationMode.CRISIS || mode == ConversationMode.SAFETY ->
+                                        "安全模式 · ${mode.label}"
+                                    else -> relationLabelOf(character?.relationType)
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isStreaming) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    accent
+                                color = when {
+                                    isStreaming -> MaterialTheme.colorScheme.primary
+                                    mode == ConversationMode.SAFETY || mode == ConversationMode.CRISIS ->
+                                        MaterialTheme.colorScheme.error
+                                    else -> accent
                                 }
                             )
                         }
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showTraceDialog = true }) {
+                        Icon(Icons.Filled.Shield, contentDescription = "安全与生成说明")
+                    }
                     IconButton(onClick = { showClearDialog = true }) {
                         Icon(Icons.Filled.DeleteSweep, contentDescription = "清空会话")
-                    }
-                    IconButton(onClick = onOpenMemory) {
-                        Icon(Icons.Filled.Psychology, contentDescription = "长期记忆")
                     }
                     IconButton(onClick = onEditCharacter) {
                         Icon(Icons.Filled.Edit, contentDescription = "编辑角色")
@@ -275,6 +354,62 @@ fun ChatScreen(
                 }
             }
 
+            // 快捷模式：把“想被倾听 / 想被分析 / 想慢下来”变成一键切换
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val modesEnabled = mode != ConversationMode.CRISIS && mode != ConversationMode.SAFETY
+                    ModeChip("自由聊", mode == ConversationMode.FREE, modesEnabled) {
+                        viewModel.setMode(ConversationMode.FREE)
+                    }
+                    ModeChip("听我吐槽", mode == ConversationMode.LISTEN, modesEnabled) {
+                        viewModel.setMode(ConversationMode.LISTEN)
+                    }
+                    ModeChip("帮我分析", mode == ConversationMode.ANALYZE, modesEnabled) {
+                        viewModel.setMode(ConversationMode.ANALYZE)
+                    }
+                    ModeChip("陪我呼吸", mode == ConversationMode.BREATHE, modesEnabled) {
+                        viewModel.setMode(ConversationMode.BREATHE)
+                    }
+                    if (scenario != null) {
+                        AssistChip(
+                            onClick = {
+                                if (modesEnabled) viewModel.setMode(ConversationMode.SCENARIO)
+                            },
+                            enabled = modesEnabled,
+                            label = { Text("场景 · ${scenario.title}") }
+                        )
+                    }
+                }
+                Text(
+                    text = when (mode) {
+                        ConversationMode.LISTEN -> "树洞模式：只倾听，不打断，不评价"
+                        ConversationMode.ANALYZE -> "分析模式：先接住情绪，再一起拆问题"
+                        ConversationMode.BREATHE -> "呼吸模式：先花 30 秒让身体慢下来"
+                        ConversationMode.SCENARIO -> "场景模式：跟着一个小步骤走"
+                        ConversationMode.SAFETY, ConversationMode.CRISIS ->
+                            "安全模式：角色扮演已暂停，先确认你的安全"
+                        ConversationMode.FREE -> "自由聊：想说什么都可以"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (mode == ConversationMode.SAFETY || mode == ConversationMode.CRISIS) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                )
+            }
+
             // 输入区
             Surface(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
@@ -298,7 +433,16 @@ fun ChatScreen(
                         shape = IsleRadius.field,
                         value = input,
                         onValueChange = viewModel::updateInput,
-                        placeholder = { Text("说点什么…") },
+                        placeholder = {
+                            Text(
+                                when (mode) {
+                                    ConversationMode.LISTEN -> "慢慢说，我在听…"
+                                    ConversationMode.BREATHE -> "准备好了就告诉我"
+                                    ConversationMode.CRISIS -> "先告诉我，你现在安全吗？"
+                                    else -> "说点什么…"
+                                }
+                            )
+                        },
                         modifier = Modifier.weight(1f),
                         maxLines = 4,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -357,6 +501,21 @@ fun ChatScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ModeChip(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        enabled = enabled,
+        label = { Text(label) }
+    )
 }
 
 @Composable
@@ -450,8 +609,9 @@ private fun MessageRow(
 }
 
 private fun relationLabelOf(type: String?): String = when (type) {
-    "love" -> "恋人"
+    "love" -> "旧版角色"
     "bestie" -> "闺蜜"
+    "teacher" -> "老师"
     "friend" -> "朋友"
     "family" -> "家人"
     else -> "自定义关系"

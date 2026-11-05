@@ -116,11 +116,11 @@ fun TechInfoScreen(onBack: () -> Unit) {
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "心屿是一款专注于情感陪伴的原生 Android 应用。\n" +
-                            "角色、对话与记忆全部保存在你的手机上；" +
-                            "语义向量检索在设备本地完成，不产生任何网络请求。\n\n" +
-                            "本应用不替代专业心理咨询服务。若你正经历持续的情绪困扰，" +
-                            "请及时寻求专业帮助。",
+                        text = "心屿是一款面向大学生的情绪支持应用。\n" +
+                            "角色、对话与记忆默认保存在你的手机上；" +
+                            "语义向量检索在设备本地完成。\n\n" +
+                            "本应用不替代专业心理咨询服务，也不做诊断或治疗。" +
+                            "若你正经历持续的情绪困扰或危机，请优先联系真人帮助。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -136,12 +136,11 @@ fun TechInfoScreen(onBack: () -> Unit) {
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "· 「恋人」等亲密关系定位仅用于情感陪伴场景的角色扮演，" +
-                            "属于虚构设定，不代表真实的恋爱关系。\n\n" +
-                            "· 本应用面向成年人使用。若你未满 18 周岁，" +
-                            "请在监护人知情同意的前提下使用，并避免过度依赖虚拟关系。\n\n" +
-                            "· 如你正经历情绪困扰或心理危机，" +
-                            "请及时向家长、老师或专业机构求助。",
+                        text = "· 心屿不提供恋人角色，也不进行恋爱、暧昧或亲密关系的角色扮演。\n\n" +
+                            "· 若你未满 18 周岁，请在监护人知情同意的前提下使用，" +
+                            "并避免过度依赖虚拟关系。\n\n" +
+                            "· 如你正经历情绪困扰或心理危机，请及时向家长、老师、" +
+                            "学校心理中心或专业机构求助。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 20.sp

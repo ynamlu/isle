@@ -56,8 +56,8 @@ import com.isle.companion.ui.component.CharacterAvatar
 import com.isle.companion.ui.component.rememberImagePicker
 
 private val RELATION_OPTIONS = listOf(
-    "love" to "恋人",
     "bestie" to "闺蜜",
+    "teacher" to "老师",
     "friend" to "朋友",
     "family" to "家人",
     "custom" to "自定义"
@@ -75,14 +75,7 @@ fun CharacterEditScreen(
         factory = viewModelFactory { initializer { CharacterEditViewModel(container, characterId) } }
     )
     val state by viewModel.state.collectAsState()
-    val profile by container.userProfileRepository.profile
-        .collectAsState(initial = com.isle.companion.data.prefs.UserProfile())
-    // 青少年模式不开放「恋人」「自定义」定位
-    val relationOptions = if (profile.isMinor) {
-        RELATION_OPTIONS.filter { it.first != "love" && it.first != "custom" }
-    } else {
-        RELATION_OPTIONS
-    }
+    val relationOptions = RELATION_OPTIONS
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val pickImage = rememberImagePicker { uri -> viewModel.importAvatar(uri) }

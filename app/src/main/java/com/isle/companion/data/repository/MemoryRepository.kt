@@ -13,6 +13,8 @@ class MemoryRepository(
 
     fun observe(characterId: Long): Flow<List<MemoryEntity>> = dao.observeByCharacter(characterId)
 
+    fun observeAll(): Flow<List<MemoryEntity>> = dao.observeAll()
+
     /**
      * 写入记忆：自动补充语义向量。内容重复时只更新最近使用时间。
      */
@@ -56,6 +58,19 @@ class MemoryRepository(
                 category = category,
                 importance = importance,
                 embedding = embedding?.let(VectorMath::toBytes)
+            )
+        )
+    }
+
+    suspend fun update(memory: MemoryEntity, content: String) {
+        val trimmed = content.trim()
+        if (trimmed.isBlank()) return
+        val embedding = embeddingProvider.embed(trimmed)
+        dao.update(
+            memory.copy(
+                content = trimmed,
+                embedding = embedding?.let(VectorMath::toBytes),
+                lastUsedAt = System.currentTimeMillis()
             )
         )
     }

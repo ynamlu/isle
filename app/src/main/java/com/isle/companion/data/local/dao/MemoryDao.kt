@@ -13,6 +13,9 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE characterId = :characterId ORDER BY importance DESC, lastUsedAt DESC")
     fun observeByCharacter(characterId: Long): Flow<List<MemoryEntity>>
 
+    @Query("SELECT * FROM memories ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<MemoryEntity>>
+
     @Query("SELECT * FROM memories WHERE characterId = :characterId ORDER BY importance DESC, lastUsedAt DESC LIMIT :limit")
     suspend fun candidates(characterId: Long, limit: Int): List<MemoryEntity>
 

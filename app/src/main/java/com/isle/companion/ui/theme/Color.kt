@@ -21,6 +21,7 @@ val IsleSurfaceDark = Color(0xFF1E1B24)
 // 关系类型配色
 val RelationLove = Color(0xFFFF6B8A)
 val RelationBestie = Color(0xFFB07CFF)
+val RelationTeacher = Color(0xFF4FA3D1)
 val RelationFriend = Color(0xFF4FC3F7)
 val RelationFamily = Color(0xFFFFB74D)
 val RelationCustom = Color(0xFF78909C)
@@ -66,6 +67,7 @@ val IsleGlassBackgroundDark: Brush
 fun relationColor(type: String): Color = when (type) {
     "love" -> RelationLove
     "bestie" -> RelationBestie
+    "teacher" -> RelationTeacher
     "friend" -> RelationFriend
     "family" -> RelationFamily
     else -> RelationCustom

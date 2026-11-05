@@ -1,6 +1,7 @@
 package com.isle.companion.di
 
 import android.content.Context
+import com.isle.companion.data.auth.LocalAuthRepository
 import com.isle.companion.data.demo.DemoDataSeeder
 import com.isle.companion.data.local.IsleDatabase
 import com.isle.companion.data.prefs.SettingsRepository
@@ -19,6 +20,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
@@ -56,6 +58,7 @@ class AppContainer(context: Context) {
 
     val settingsRepository = SettingsRepository(appContext)
     val userProfileRepository = UserProfileRepository(appContext)
+    val localAuthRepository = LocalAuthRepository(appContext)
     val avatarStorage = AvatarStorage(appContext)
     val openAiClient = OpenAiClient(json, okHttpClient, openAiApi)
     val characterRepository = CharacterRepository(database.characterDao(), avatarStorage, database.messageDao())
@@ -73,4 +76,20 @@ class AppContainer(context: Context) {
         chatRepository = chatRepository,
         memoryRepository = memoryRepository
     )
+
+    /** 删除本地账户时清空聊天、记忆、角色与图片。 */
+    suspend fun clearAllData() {
+        runCatching {
+            database.messageDao().allImagePaths().forEach { path ->
+                File(path).takeIf { it.exists() }?.delete()
+            }
+        }
+        File(appContext.filesDir, "chat_images").deleteRecursively()
+        File(appContext.filesDir, "avatars").deleteRecursively()
+        database.messageDao().deleteAll()
+        database.memoryDao().deleteAll()
+        database.characterDao().deleteAll()
+        settingsRepository.clear()
+        userProfileRepository.clear()
+    }
 }
