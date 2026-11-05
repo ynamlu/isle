@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.IsleRadius
 import com.isle.companion.ui.theme.liquidGlass
 import com.isle.companion.ui.theme.liquidGlassSource
@@ -166,7 +167,7 @@ fun CharacterEditScreen(
                 onValueChange = viewModel::updateName,
                 label = { Text("角色名称 *") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -201,7 +202,7 @@ fun CharacterEditScreen(
                 label = { Text("性格描述") },
                 placeholder = { Text("例如：温柔、幽默、有点小傲娇") },
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
             )
 
             OutlinedTextField(
@@ -210,7 +211,7 @@ fun CharacterEditScreen(
                 onValueChange = viewModel::updateBio,
                 label = { Text("简介 / 背景故事") },
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
             )
 
             OutlinedTextField(
@@ -220,7 +221,7 @@ fun CharacterEditScreen(
                 label = { Text("说话风格") },
                 placeholder = { Text("例如：喜欢叫我「笨蛋」，语气轻快") },
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
             )
 
             OutlinedTextField(
@@ -230,7 +231,7 @@ fun CharacterEditScreen(
                 label = { Text("开场白") },
                 placeholder = { Text("例如：嗨，今天过得怎么样呀～") },
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
             )
 
             Button(

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.isle.companion.data.auth.AuthResult
 import com.isle.companion.data.auth.LocalAuthRepository
+import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleBrandBrush
 import com.isle.companion.ui.theme.IsleRadius
@@ -275,7 +276,7 @@ private fun RegisterContent(
         placeholder = { Text("不需要真名") },
         singleLine = true,
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     OutlinedTextField(
         value = password,
@@ -285,7 +286,7 @@ private fun RegisterContent(
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     OutlinedTextField(
         value = confirm,
@@ -295,7 +296,7 @@ private fun RegisterContent(
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     AuthMessage(message)
     Button(
@@ -334,7 +335,7 @@ private fun LoginContent(
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     AuthMessage(message)
     Button(onClick = onSubmit, enabled = !busy && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
@@ -370,7 +371,7 @@ private fun RecoveryContent(
         placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
         singleLine = true,
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     OutlinedTextField(
         value = newPassword,
@@ -380,7 +381,7 @@ private fun RecoveryContent(
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         shape = IsleRadius.field,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
     )
     AuthMessage(message)
     Button(
@@ -502,7 +503,7 @@ fun LockScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     shape = IsleRadius.field,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                 )
                 AuthMessage(message)
                 Button(
@@ -534,7 +535,7 @@ fun LockScreen(
                     label = { Text("恢复码") },
                     singleLine = true,
                     shape = IsleRadius.field,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                 )
                 OutlinedTextField(
                     value = newPassword,
@@ -544,7 +545,7 @@ fun LockScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     shape = IsleRadius.field,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                 )
                 AuthMessage(message)
                 Button(

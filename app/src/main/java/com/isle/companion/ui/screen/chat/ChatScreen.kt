@@ -81,6 +81,7 @@ import com.isle.companion.di.appContainer
 import com.isle.companion.domain.safety.ConversationMode
 import com.isle.companion.domain.safety.SafetyEngine
 import com.isle.companion.ui.component.CharacterAvatar
+import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.component.ImageViewerDialog
 import com.isle.companion.ui.component.rememberImagePicker
 import com.isle.companion.ui.theme.IsleUserBubbleBrush
@@ -443,7 +444,9 @@ fun ChatScreen(
                                 }
                             )
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .keyboardRetryOnFocus(),
                         maxLines = 4,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = accent,

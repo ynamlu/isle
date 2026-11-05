@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.IsleRadius
 import com.isle.companion.ui.theme.liquidGlass
 import com.isle.companion.ui.theme.liquidGlassSource
@@ -143,7 +144,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -158,7 +159,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         supportingText = {
                             Text("填到 /v1 即可；也支持完整 .../chat/completions 地址；本地服务可用 http://")
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -170,7 +171,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         label = { Text("模型 ID") },
                         singleLine = true,
                         placeholder = { Text("gpt-4o-mini / deepseek-chat / qwen3.5-omni-plus") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -188,7 +189,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         label = { Text("最大回复 tokens") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
 
                     Spacer(Modifier.height(8.dp))
@@ -315,7 +316,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         onValueChange = { modelQuery = it },
                         singleLine = true,
                         label = { Text("搜索模型") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
                     Spacer(Modifier.height(8.dp))
                     if (filtered.isEmpty()) {

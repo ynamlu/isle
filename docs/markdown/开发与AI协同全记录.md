@@ -1,7 +1,7 @@
 ---
 title: 心屿（Isle）
 subtitle: 开发与 AI 协同全记录（合订本）
-version: v2.2.0
+version: v2.2.1
 date: 2026-11-05
 author: 沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
 ---
@@ -106,7 +106,7 @@ author: 沧州交通学院 · 计算机与信息技术学院 · 软件工程 241
 | 2 | Kotlin 元数据 2.4 与编译器 2.2 不兼容 | Coil 3.6.3 强制拉高 stdlib | 降级 Coil 到 3.4.0 |
 | 3 | Haze 2.0.1 元数据过高 | 编译器版本不足 | 升级 Kotlin 2.3.21 + KSP 2.3.12 |
 | 4 | `new DSL` 与 Kotlin 插件冲突 | AGP 9 新 DSL | `android.newDsl=false` |
-| 5 | 输入法拉不起来 | 设备默认输入法是微信输入法插件服务 | 应用侧 `adjustResize` + `imePadding`；非 App bug |
+| 5 | 输入法拉不起来 | 第三方输入法懒加载 / 插件服务未及时初始化 | `adjustResize` + `imePadding` + 焦点后自动重试拉起 |
 | 6 | 聊天图片模糊 | 复用了头像 512px 压缩 | 聊天图独立 1600px |
 | 7 | 消息同毫秒排序错位 | 只按 timestamp 排序 | `ORDER BY timestamp DESC, id DESC` |
 | 8 | 流式 `[DONE]` 与 `onClosed` 双回调 | 结算逻辑重复 | `AtomicBoolean` 单次结算 |
@@ -227,7 +227,7 @@ SafetyEngine
 | 问题 | 根因 | 修复 |
 | --- | --- | --- |
 | 英文危机表达带空格输入不稳定 | `adb input text` 的分词限制 | SafetyEngine 增加去空格匹配 |
-| 测试时微信输入法无法输入 | 设备输入法问题 | 临时切 Gboard，测试后恢复 |
+| 测试时微信输入法无法输入 | 输入法服务未及时初始化 | 新增输入框焦点重试，并复测第三方输入法 |
 | 记忆折叠返回后丢失 | 状态存在 `remember` | 移入 ViewModel |
 | 记忆条目误触跳转 | 整行可点击 | 记忆条目只读，角色组「管理」进入管理页 |
 | 聊天页记忆入口过深 | 入口在聊天右上角 | 移除，统一放到记忆 Tab |

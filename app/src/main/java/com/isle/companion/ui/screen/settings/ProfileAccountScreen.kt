@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.isle.companion.data.auth.AuthResult
 import com.isle.companion.di.appContainer
+import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleRadius
 import com.isle.companion.ui.theme.isleBackground
@@ -128,7 +129,7 @@ fun ProfileAccountScreen(
                             visualTransformation = PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             shape = IsleRadius.field,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
                         )
                         recoveryMessage?.let {
                             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -297,7 +298,7 @@ fun ProfileAccountScreen(
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                 shape = IsleRadius.field,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
                             )
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
@@ -308,7 +309,7 @@ fun ProfileAccountScreen(
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                 shape = IsleRadius.field,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus().keyboardRetryOnFocus()
                             )
                             message?.let {
                                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -359,7 +360,7 @@ fun ProfileAccountScreen(
                         label = { Text("希望被怎么称呼") },
                         placeholder = { Text("例如：小彤") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
@@ -369,7 +370,7 @@ fun ProfileAccountScreen(
                         label = { Text("我的性格") },
                         placeholder = { Text("例如：慢热但很重感情，容易共情，偶尔会多想") },
                         minLines = 2,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
@@ -379,7 +380,7 @@ fun ProfileAccountScreen(
                         label = { Text("想对 TA 说的话") },
                         placeholder = { Text("例如：我最近在准备考试，压力有点大，希望有人能听我说说话") },
                         minLines = 3,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
                 }
             }
