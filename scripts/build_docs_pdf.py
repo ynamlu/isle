@@ -64,13 +64,13 @@ DOCS = [
         "icon": "../心屿-新图标.png",
     },
     {
-        "src": "docs/markdown/产品说明.md",
-        "pdf": "docs/pdf/产品说明.pdf",
+        "src": "docs/markdown/作品介绍.md",
+        "pdf": "docs/pdf/作品介绍.pdf",
         "title": "心屿（Isle）",
-        "subtitle": "产品说明",
+        "subtitle": "作品介绍",
         "version": "v2.3.1",
         "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
-        "header": "心屿 · 产品说明",
+        "header": "心屿 · 作品介绍",
         "icon": "../心屿-新图标.png",
     },
     {
