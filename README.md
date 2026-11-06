@@ -118,15 +118,15 @@
 
 | 启动封面 | 首页 / 四栏导航 |
 | --- | --- |
-| ![](docs/screenshots/20_splash.png) | ![](docs/screenshots/21_home.png) |
+| ![](docs/screenshots/01_splash.png) | ![](docs/screenshots/02_home.png) |
 
 | 场景 | 记忆折叠 |
 | --- | --- |
-| ![](docs/screenshots/22_scenarios.png) | ![](docs/screenshots/23_memory_collapsed.png) |
+| ![](docs/screenshots/03_scenarios.png) | ![](docs/screenshots/05_memory_collapsed.png) |
 
 | 记忆展开 | 我的 |
 | --- | --- |
-| ![](docs/screenshots/24_memory_expanded.png) | ![](docs/screenshots/25_me.png) |
+| ![](docs/screenshots/06_memory_expanded.png) | ![](docs/screenshots/07_me.png) |
 
 ---
 
