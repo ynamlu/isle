@@ -41,7 +41,7 @@ https://isle-proxy.ynatech.xyz
 
 ```properties
 AI_BASE_URL=https://isle-proxy.ynatech.xyz/v1
-AI_MODEL=qwen3.5-omni-plus
+AI_MODEL=deepseek-v4.1-flash-1017
 AI_API_KEY=<CLIENT_TOKEN>
 ```
 

@@ -48,20 +48,37 @@ function unauthorized() {
   return json({ error: "unauthorized" }, 401);
 }
 
+function allowedModels(env) {
+  return (env.ALLOWED_MODELS || "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+}
+
 async function proxyModels(env) {
   const upstream = await fetch(`${env.UPSTREAM_BASE_URL}/models`, {
     headers: {
       Authorization: `Bearer ${env.UPSTREAM_API_KEY}`,
     },
   });
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: {
-      "Content-Type": upstream.headers.get("Content-Type") || "application/json",
-      "Cache-Control": "no-store",
-      ...CORS,
-    },
-  });
+
+  if (!upstream.ok) {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: {
+        "Content-Type": upstream.headers.get("Content-Type") || "application/json",
+        "Cache-Control": "no-store",
+        ...CORS,
+      },
+    });
+  }
+
+  const payload = await upstream.json();
+  const allowed = allowedModels(env);
+  if (allowed.length > 0 && Array.isArray(payload.data)) {
+    payload.data = payload.data.filter((model) => allowed.includes(model.id));
+  }
+  return json(payload);
 }
 
 async function proxyChat(request, env) {
@@ -74,11 +91,8 @@ async function proxyChat(request, env) {
     return json({ error: "bad json" }, 400);
   }
 
-  const allowedModels = (env.ALLOWED_MODELS || "")
-    .split(",")
-    .map((model) => model.trim())
-    .filter(Boolean);
-  if (allowedModels.length > 0 && !allowedModels.includes(body.model)) {
+  const allowed = allowedModels(env);
+  if (allowed.length > 0 && !allowed.includes(body.model)) {
     return json({ error: "model not allowed" }, 400);
   }
 

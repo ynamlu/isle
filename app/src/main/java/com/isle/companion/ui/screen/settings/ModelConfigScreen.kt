@@ -170,7 +170,7 @@ fun ModelConfigScreen(onBack: () -> Unit) {
                         onValueChange = viewModel::updateModel,
                         label = { Text("模型 ID") },
                         singleLine = true,
-                        placeholder = { Text("gpt-4o-mini / deepseek-chat / qwen3.5-omni-plus") },
+                        placeholder = { Text("gpt-4o-mini / deepseek-v4.1-flash-1017") },
                         modifier = Modifier.fillMaxWidth().keyboardRetryOnFocus()
                     )
 
@@ -362,6 +362,6 @@ private val providerPresets = listOf(
     ProviderPreset("OpenAI", "https://api.openai.com/v1", "gpt-4o-mini"),
     ProviderPreset("DeepSeek", "https://api.deepseek.com/v1", "deepseek-flash"),
     ProviderPreset("通义千问", "https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen-plus"),
-    ProviderPreset("千问 MaaS", "https://maas.qianwenaiapi.com/compatible-mode/v1", "qwen3.5-omni-plus"),
+    ProviderPreset("千问 MaaS", "https://maas.qianwenaiapi.com/compatible-mode/v1", "deepseek-v4.1-flash-1017"),
     ProviderPreset("本地 Ollama", "http://10.0.2.2:11434/v1", "llama3.1")
 )

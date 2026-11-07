@@ -175,7 +175,7 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 
 ```properties
 AI_BASE_URL=https://isle-proxy.ynatech.xyz/v1
-AI_MODEL=qwen3.5-omni-plus
+AI_MODEL=deepseek-v4.1-flash-1017
 AI_API_KEY=<CLIENT_TOKEN>
 ```
 
@@ -437,4 +437,4 @@ docs/
 
 - GitHub：<https://github.com/ynamlu/isle>
 - 作者：沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
-- 版本：`v2.3.1`（versionCode 14）
+- 版本：`v2.3.2`（versionCode 15）
