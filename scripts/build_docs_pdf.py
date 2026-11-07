@@ -135,7 +135,7 @@ def build_html(doc: dict[str, str]) -> str:
     title = meta.get("title", doc["title"])
     subtitle = meta.get("subtitle", doc["subtitle"])
     version = meta.get("version", doc["version"])
-    date = meta.get("date", "2026-11-06")
+    date = meta.get("date", "2026-11-07")
     author = meta.get("author", doc["author"])
     body = strip_before_first_h2(strip_first_h1(body))
 
