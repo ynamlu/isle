@@ -7,7 +7,7 @@
 页面上的「下载 APK」指向夸克网盘：
 
 ```text
-https://pan.quark.cn/s/f9591b0413aa
+https://pan.quark.cn/s/cc1d3e2d7d0d
 ```
 
 ## 部署
