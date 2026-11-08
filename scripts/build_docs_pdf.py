@@ -44,6 +44,16 @@ DOCS = [
         "icon": "../心屿-新图标.png",
     },
     {
+        "src": "docs/markdown/需求分析.md",
+        "pdf": "docs/pdf/需求分析.pdf",
+        "title": "心屿（Isle）",
+        "subtitle": "需求分析",
+        "version": "v2.3.3",
+        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "header": "心屿 · 需求分析",
+        "icon": "../心屿-新图标.png",
+    },
+    {
         "src": "docs/markdown/测试报告.md",
         "pdf": "docs/pdf/测试报告.pdf",
         "title": "心屿（Isle）",

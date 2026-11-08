@@ -9,6 +9,18 @@
 
 ---
 
+## 怎么读这份文档
+
+如果你只想快速了解这个作品，先看「这是什么」「核心能力」和「产品截图」就够了。
+
+如果你想运行或检查代码，直接跳到「10 分钟极速复现」和「测试与验证」。
+
+如果你关心安全边界，重点看「多智能体安全路由」「本地匿名账户」和「隐私与安全」。
+
+这份 README 写给开发者和技术评委，语言会尽量直白，但不会省略必要的技术细节。
+
+---
+
 ## 这是什么
 
 心屿是一款原生 Android **情绪支持应用**。
@@ -403,6 +415,7 @@ docs/
 | [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、代理与密钥保护 |
 | [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/markdown/作品介绍.md`](docs/markdown/作品介绍.md) · [PDF](docs/pdf/作品介绍.pdf) | 项目详情、使用方式、亮点、AI 测试、关键技术、图片、获奖与原创性说明 |
+| [`docs/markdown/需求分析.md`](docs/markdown/需求分析.md) · [PDF](docs/pdf/需求分析.pdf) | 背景、用户场景、功能与非功能需求、验收标准与需求追踪 |
 | [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程、完整 AI 对话与 Prompt 历史 |
 | [`docs/markdown/测试报告.md`](docs/markdown/测试报告.md) · [PDF](docs/pdf/测试报告.pdf) | 自动化测试、真机回归、安全专项、缺陷记录 |
 | [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md) | 代理部署、换 Key、令牌轮换与安全边界 |
