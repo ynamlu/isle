@@ -11,3 +11,6 @@ local.properties
 /app/build
 
 .kotlin/
+
+# Wrangler local cache
+/.wrangler/
