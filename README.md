@@ -177,34 +177,18 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 
 ### ③ 配置模型服务
 
-公开分发的安装包默认通过 Cloudflare Worker 代理接入模型：上游真实 Key 保存在 Worker Secret，APK 只携带可撤销的代理令牌，用户无需填写 Key。
-
-自行从源码构建时，二选一：
-
-**方式 A · 代理模式（推荐公开分发）**
-
-先部署 `server/cloudflare-worker/`，再在 `local.properties` 中填写代理地址和代理令牌：
+在 `local.properties` 中直接填写模型服务地址、模型 ID 和 Key：
 
 ```properties
-AI_BASE_URL=https://isle-proxy.ynatech.xyz/v1
+AI_BASE_URL=https://maas.qianwenaiapi.com/compatible-mode/v1
 AI_MODEL=deepseek-v4.1-flash-1017
-AI_API_KEY=<CLIENT_TOKEN>
-```
-
-完整部署与换 Key 流程见 [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md)。
-
-**方式 B · BYOK（用户自带 Key）**
-
-不部署代理，直接连接兼容 OpenAI `/chat/completions` 的服务：
-
-```properties
-AI_BASE_URL=https://api.deepseek.com/v1
-AI_MODEL=deepseek-chat
 AI_API_KEY=sk-你的密钥
 ```
 
 优先级：**应用内设置 > local.properties 注入 > 通用默认值**。
-`local.properties` 不入库；公开分发时不要把上游真实 Key 注入 APK。
+
+`local.properties` 不入库，但构建时 Key 会写入 BuildConfig，最终进入 APK。
+因此这个配置只适合私有演示或比赛提交；公开分发前请轮换 Key，并重新打包。
 
 ### ④ 构建
 
@@ -301,22 +285,20 @@ Data 层
 - 应用锁 60 秒；
 - 删除账户清空本地数据。
 
-### 模型接入与密钥保护
+### 模型接入与本地配置
 
-公开分发包不包含上游真实 Key：
+当前版本直接连接千问 MaaS：
 
 ```text
-App（只带代理令牌）
-  → Cloudflare Worker（校验令牌 / 模型白名单 / max_tokens）
-  → 千问 MaaS（真实 Key 只在 Worker Secret）
+App（AI_BASE_URL + AI_MODEL + AI_API_KEY）
+  → 千问 MaaS /chat/completions
 ```
 
-- 真实 Key 只存在 Cloudflare Secret `UPSTREAM_API_KEY`；
-- APK 只含代理地址和可撤销的 `CLIENT_TOKEN`；
-- 换上游 Key：`wrangler secret put UPSTREAM_API_KEY`，**无需重新打包**；
-- 换代理令牌或地址：更新 `local.properties` 并重新打包；
-- 代理令牌仍可能被反编译提取，但无法换取真实 Key，且受模型白名单与 `max_tokens` 约束；
-- 代理代码与部署说明：`server/cloudflare-worker/`。
+- 模型地址、模型 ID、Key 来自 `local.properties`，构建时注入 BuildConfig；
+- 默认模型为 `deepseek-v4.1-flash-1017`；
+- 换 Key 或换模型需要更新 `local.properties` 并重新打包；
+- Key 会进入 APK，可能被反编译提取，因此只适合私有演示或比赛提交；
+- 公开分发前请轮换 Key，或改成用户自带 Key（BYOK）模式。
 
 ---
 
@@ -379,7 +361,6 @@ Isle/
 ├── app/src/androidTest/                     # 仪器化测试
 ├── docs/                                    # 交付文档与截图
 ├── share/                                   # 情绪手账二维码落地页
-├── server/cloudflare-worker/                # 模型代理（正式分发默认）
 └── gradle/                                  # 版本目录 / Wrapper
 ```
 
@@ -393,7 +374,7 @@ Isle/
 | JVM | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | **60 tests，0 failures** |
 | 仪器 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
 | 真机 | CPH2747 / Android 17 | 注册 / 锁定 / 场景 / 危机拦截 / 记忆折叠 / 四栏导航 |
-| 代理 | Cloudflare Worker | `/v1/models` 200 / SSE 正常 / 无令牌 401 / 非白名单模型 400 / 2.1MB 图片请求 200 |
+| 模型直连 | 千问 MaaS | `/v1/models` 200 / SSE 正常 / 2.1MB 图片请求 200 |
 | 向量 | `TextEmbedderTest` | 相似句 0.85 / 无关句 0.39 |
 | 包体 | arm64 debug | 约 68MB（含 ONNX 模型） |
 
@@ -412,26 +393,24 @@ docs/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、代理与密钥保护 |
+| [`docs/markdown/技术文档.md`](docs/markdown/技术文档.md) · [PDF](docs/pdf/技术文档-心屿.pdf) | 意图控制、架构、记忆、安全路由、本地账户、模型配置与可复现性 |
 | [`docs/markdown/用户使用说明书.md`](docs/markdown/用户使用说明书.md) · [PDF](docs/pdf/用户使用说明书.pdf) | 面向用户的操作指南 |
 | [`docs/markdown/作品介绍.md`](docs/markdown/作品介绍.md) · [PDF](docs/pdf/作品介绍.pdf) | 项目详情、使用方式、亮点、AI 测试、关键技术、图片、获奖与原创性说明 |
 | [`docs/markdown/需求分析.md`](docs/markdown/需求分析.md) · [PDF](docs/pdf/需求分析.pdf) | 背景、用户场景、功能与非功能需求、验收标准与需求追踪 |
 | [`docs/markdown/开发与AI协同全记录.md`](docs/markdown/开发与AI协同全记录.md) · [PDF](docs/pdf/开发与AI协同全记录.pdf) | 开发过程、完整 AI 对话与 Prompt 历史 |
 | [`docs/markdown/测试报告.md`](docs/markdown/测试报告.md) · [PDF](docs/pdf/测试报告.pdf) | 自动化测试、真机回归、安全专项、缺陷记录 |
-| [`server/cloudflare-worker/README.md`](server/cloudflare-worker/README.md) | 代理部署、换 Key、令牌轮换与安全边界 |
 
 ---
 
 ## 隐私与安全
 
 - 聊天、记忆、向量默认只存本机；
-- 公开分发包通过 `server/cloudflare-worker` 代理接入，APK 只携带可撤销的代理令牌；
-- 上游真实 Key 保存在 Cloudflare Secret，不进入 APK、仓库或客户端配置；
-- 发送消息时，内容会传输至代理与模型服务用于生成回复；
+- 模型地址、模型 ID 和 Key 从 `local.properties` 注入，构建后进入 APK；
+- 因此 APK 只适合比赛演示或私有分发，公开前必须轮换 Key；
+- 发送消息时，内容会传输至模型服务用于生成回复；
 - 本地账户不收集手机号、邮箱、实名信息；
 - 删除账户会清除本地数据；
-- 危机内容不写入长期记忆；
-- 代理令牌仍可能被提取，已通过模型白名单与 `max_tokens` 上限降低滥用风险，发现异常可随时轮换；当前不启用请求限流，避免图片与长回复被限额打断。
+- 危机内容不写入长期记忆。
 
 ---
 
@@ -442,7 +421,8 @@ docs/
 - 无跨设备同步 / 云备份；
 - 本地风险规则可能有误判；
 - 本地账户无法做学籍/实名核验；
-- 当前为 debug 签名，正式分发前需 release keystore。
+- 当前为 debug 签名，正式分发前需 release keystore；
+- 模型 Key 会进入 APK，公开分发前必须轮换或改用 BYOK。
 
 ---
 
@@ -450,4 +430,4 @@ docs/
 
 - GitHub：<https://github.com/ynamlu/isle>
 - 作者：沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
-- 版本：`v2.3.3`（versionCode 16）
+- 版本：`v2.3.4`（versionCode 17）

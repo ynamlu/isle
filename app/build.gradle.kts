@@ -57,8 +57,8 @@ android {
         applicationId = "com.isle.companion"
         minSdk = 26
         targetSdk = 37
-        versionCode = 16
-        versionName = "2.3.3"
+        versionCode = 17
+        versionName = "2.3.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // 内置模型服务配置：未留空时作为应用默认值，用户可在设置页覆盖。
