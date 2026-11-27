@@ -2,17 +2,13 @@
 
 这是情绪手账二维码指向的落地页。
 
-## 下载地址
+## 安装入口
 
-页面上的「下载 APK」指向夸克网盘：
-
-```text
-https://pan.quark.cn/s/4b4dcbf72b98
-```
+页面链接到 v2.3.5 标签的 README。准备好独立的公开安装包后，可将「查看安装指南」的链接改为安装包地址，并同步更新按钮文字。
 
 ## 部署
 
-把 `share/` 整个目录上传到任意静态托管（Vercel / Netlify / Cloudflare Pages / GitHub Pages / 对象存储均可）。
+把 `share/` 整个目录上传到静态托管，使用 `index.html` 作为入口。需要一起上传 `style.css`、`icon.png` 和 `screenshot.png`。
 
 ## 配置二维码地址
 
