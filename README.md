@@ -67,7 +67,7 @@
 
 ### 2. 四栏导航与启动体验
 
-- 冷启动品牌封面约 1.4 秒，然后进入登录/锁屏；
+- 启动后按账户和资料加载状态进入登录、锁屏或首页；
 - 底部四栏：**首页 / 场景 / 记忆 / 我的**；
 - 聊天、角色编辑、账户等二级页面自动隐藏底部栏；
 - 新图标：深海渐变 + 心形对话空间 + 消息点 + 月牙与涟漪。
@@ -177,20 +177,12 @@ sdk.dir=/Users/你的用户名/Library/Android/sdk
 # sdk.dir=/home/你的用户名/Android/Sdk
 ```
 
-### ③ 配置模型服务
+### ③ 选择体验路径
 
-在 `local.properties` 中直接填写模型服务地址、模型 ID 和 Key：
+- **无模型 Key**：装提交包里的 arm64 APK，点「先体验」进入首页。可查看预设角色、场景和演示记忆，也可核对本地安全路由。
+- **体验完整对话**：在「我的 → 模型服务」填写 OpenAI 兼容接口地址、模型 ID 和自己的 Key，点「测试连接」后保存。随后选「期末复习焦虑」及一个角色，完成对话、查看记忆并尝试保存手账。
 
-```properties
-AI_BASE_URL=https://maas.qianwenaiapi.com/compatible-mode/v1
-AI_MODEL=deepseek-v4.1-flash-1017
-AI_API_KEY=sk-你的密钥
-```
-
-优先级：**应用内设置 > local.properties 注入 > 通用默认值**。
-
-`local.properties` 不入库，但构建时 Key 会写入 BuildConfig，最终进入 APK。
-因此这个配置只适合私有演示或比赛提交；公开分发前请轮换 Key，并重新打包。
+首次拉取构建依赖的时间与网络有关。已有 Android 环境时可按以下步骤从源码复现。
 
 ### ④ 构建
 
@@ -215,7 +207,7 @@ adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
 首次启动：
 
 ```text
-品牌封面 → 创建本地账户 / 先体验 → 首页
+创建本地账户或点「先体验」→ 首页
 ```
 
 ### ⑥ 测试
@@ -264,18 +256,7 @@ NONE / WATCH 进入普通回复路径；HIGH / CRISIS 由本地逻辑返回固�
 
 ### 模型接入与本地配置
 
-当前版本直接连接千问 MaaS：
-
-```text
-App（AI_BASE_URL + AI_MODEL + AI_API_KEY）
-  → 千问 MaaS /chat/completions
-```
-
-- 模型地址、模型 ID、Key 来自 `local.properties`，构建时注入 BuildConfig；
-- 默认模型为 `deepseek-v4.1-flash-1017`；
-- 换 Key 或换模型需要更新 `local.properties` 并重新打包；
-- Key 会进入 APK，可能被反编译提取，因此只适合私有演示或比赛提交；
-- 公开分发前请轮换 Key，或改成用户自带 Key（BYOK）模式。
+应用直连配置的 OpenAI 兼容服务。地址、模型 ID 和 Key 均可在「我的 → 模型服务」修改，无需重新构建。构建可以提供默认地址和模型 ID。模型密钥由应用内配置提供。
 
 ---
 
@@ -345,16 +326,15 @@ Isle/
 
 ## 测试与验证
 
-下表记录 v2.3.4 的验证结果。
+本节记录 v2.3.6 的构建与验证。
 
 | 维度 | 手段 | 结果 |
 | --- | --- | --- |
 | 编译 | `assembleDebug` | BUILD SUCCESSFUL |
-| JVM | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | **60 tests，0 failures** |
+| JVM | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | 57 项通过，3 项联网用例跳过，0 项失败 |
 | 仪器 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
-| 真机 | CPH2747 / Android 17 | 注册 / 锁定 / 场景 / 危机拦截 / 记忆折叠 / 四栏导航 |
-| 模型直连 | 千问 MaaS | `/v1/models` 200 / SSE 正常 / 2.1MB 图片请求 200 |
-| 向量 | `TextEmbedderTest` | 相似句 0.85 / 无关句 0.39 |
+| 真机 | CPH2747 / Android 17 | 开发者已完成手动试用 |
+| 模型直连 | 千问 MaaS | `按模型服务配置执行测试连接 |
 | 包体 | arm64 debug | 约 68MB（含 ONNX 模型） |
 
 ---
@@ -384,8 +364,7 @@ docs/
 ## 隐私与安全
 
 - 聊天、记忆条目和向量在本机保存；生成回复时发送用户消息，抽取记忆时发送本轮用户消息与助手回复；
-- 模型地址、模型 ID 和 Key 从 `local.properties` 注入，构建后进入 APK；
-- 因此 APK 只适合比赛演示或私有分发，公开前必须轮换 Key；
+- 模型 Key 在应用内配置，APK 构建不读取私人 Key；
 - 本地账户不收集手机号、邮箱、实名信息；
 - 删除账户会清除本地数据；
 - 危机内容不写入长期记忆。
@@ -400,17 +379,18 @@ docs/
 - 本地风险规则可能有误判；
 - 本地账户无法做学籍/实名核验；
 - 当前为 debug 签名，正式分发前需 release keystore；
-- 模型 Key 会进入 APK，公开分发前必须轮换或改用 BYOK。
 
 ---
 
 ## 仓库
 
 - GitHub：<https://github.com/ynamlu/isle>
-- 版本：`v2.3.5`（versionCode 18）
+- 版本：`v2.3.6`（versionCode 19）
 
-## v2.3.5 更新
+## v2.3.6 更新
 
 - App 关于页和分享页移除开发者身份信息。
 - 更新静态分享页的移动端排版、使用说明和安装入口。
 - 更新参赛文档与图示，移除封面、截图及协同记录中的身份字段。
+- 取消固定启动等待，聊天列表保持底部锚点，减少流式更新时的重复滚动。
+- 更新场景选择卡和恢复码保存卡，取消聊天返回时的默认缩放。

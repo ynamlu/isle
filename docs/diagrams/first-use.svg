@@ -986,8 +986,8 @@ been cleared for every commercial, promotional, or redistributive use.</metadata
           <text x="94" y="137.3" class="t-muted" font-size="8" text-anchor="middle">首次安装后启动</text>
         </g>
 
-        <g id="node-splash" data-node-id="splash" data-node-label="启动封面" tabindex="0" role="button" aria-label="聚焦启动封面，约 1.4 秒, 启动与账户" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="约 1.4 秒" data-node-context="启动与账户">
-          <title>启动封面 · 约 1.4 秒 · 启动与账户</title>
+        <g id="node-splash" data-node-id="splash" data-node-label="启动封面" tabindex="0" role="button" aria-label="聚焦启动封面，按需加载, 启动与账户" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="按需加载" data-node-context="启动与账户">
+          <title>启动封面 · 按需加载 · 启动与账户</title>
           <rect x="172" y="93" width="92" height="52" rx="8" class="c-mask"/>
           <rect x="172" y="93" width="92" height="52" rx="8" class="c-frontend" data-animate="node" style="--step: 1; --flow-node-name: archify-relay-node-1;" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(178 99) scale(0.6875)">
@@ -997,7 +997,7 @@ been cleared for every commercial, promotional, or redistributive use.</metadata
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" x="218" y="125" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">启动封面</text>
-          <text x="218" y="137.3" class="t-muted" font-size="8" text-anchor="middle">约 1.4 秒</text>
+          <text x="218" y="137.3" class="t-muted" font-size="8" text-anchor="middle">按需加载</text>
         </g>
 
         <g id="node-account" data-node-id="account" data-node-label="账户入口" tabindex="0" role="button" aria-label="聚焦账户入口，注册 · 游客 · 登录 · 解锁, 启动与账户" aria-pressed="false" data-node-kind="security" data-node-sublabel="注册 · 游客 · 登录 · 解锁" data-node-context="启动与账户">

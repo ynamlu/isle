@@ -11,7 +11,7 @@ plugins {
 
 // 从 local.properties 读取模型服务配置（该文件不入版本库）。
 // 支持任意 OpenAI 兼容协议的服务：API 地址 + 模型 ID + API Key。
-// 构建时注入为 BuildConfig 字段，用户仍可在设置页用自己的配置覆盖。
+// 构建时可提供模型地址和 ID，Key 只从应用内设置读取。
 val localProps: Properties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -21,16 +21,8 @@ fun localProp(vararg names: String): String = names.firstNotNullOfOrNull { name 
     localProps.getProperty(name)?.trim()?.takeIf { it.isNotEmpty() }
 } ?: ""
 
-// 兼容历史配置：只填了 DEEPSEEK_API_KEY 时，自动补齐 DeepSeek 的地址与模型。
-val explicitKey = localProp("AI_API_KEY", "OPENAI_API_KEY")
-val legacyDeepSeekKey = localProp("DEEPSEEK_API_KEY")
-val legacyDeepSeekMode = explicitKey.isEmpty() && legacyDeepSeekKey.isNotEmpty()
-
-val aiApiKey = explicitKey.ifEmpty { legacyDeepSeekKey }
 val aiBaseUrl = localProp("AI_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE")
-    .ifEmpty { if (legacyDeepSeekMode) "https://api.deepseek.com/v1" else "" }
 val aiModel = localProp("AI_MODEL", "OPENAI_MODEL", "AI_MODEL_ID")
-    .ifEmpty { if (legacyDeepSeekMode) "deepseek-flash" else "" }
 val shareQrUrl = localProp("SHARE_QR_URL").ifEmpty { "https://isle.ynatech.xyz/" }
 
 /** 转义为 BuildConfig（Java 源码）中的字符串字面量，避免地址/Key 中的特殊字符破坏生成。 */
@@ -57,14 +49,14 @@ android {
         applicationId = "com.isle.companion"
         minSdk = 26
         targetSdk = 37
-        versionCode = 18
-        versionName = "2.3.5"
+        versionCode = 19
+        versionName = "2.3.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // 内置模型服务配置：未留空时作为应用默认值，用户可在设置页覆盖。
+        // 构建只提供地址与模型默认值，私人密钥在应用内配置。
         buildConfigField("String", "DEMO_AI_BASE_URL", buildConfigStringLiteral(aiBaseUrl))
         buildConfigField("String", "DEMO_AI_MODEL", buildConfigStringLiteral(aiModel))
-        buildConfigField("String", "DEMO_AI_API_KEY", buildConfigStringLiteral(aiApiKey))
+        buildConfigField("String", "DEMO_AI_API_KEY", buildConfigStringLiteral(""))
         buildConfigField("String", "SHARE_QR_URL", buildConfigStringLiteral(shareQrUrl))
     }
 

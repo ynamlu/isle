@@ -1,7 +1,7 @@
 ---
 title: 心屿（Isle）
 subtitle: 开发与 AI 协同全记录（合订本）
-version: v2.3.5
+version: v2.3.6
 date: 2026-11-13
 ---
 

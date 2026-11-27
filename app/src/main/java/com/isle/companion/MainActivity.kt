@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -12,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,8 +21,6 @@ import com.isle.companion.ui.screen.auth.AuthScreen
 import com.isle.companion.ui.screen.auth.LockScreen
 import com.isle.companion.ui.screen.splash.SplashScreen
 import com.isle.companion.ui.theme.IsleTheme
-import com.isle.companion.ui.theme.isleBackground
-import kotlinx.coroutines.delay
 
 /**
  * 应用主 Activity，承载 Compose 界面。
@@ -51,12 +47,6 @@ class MainActivity : ComponentActivity() {
                 val pendingRecoveryCode by container.localAuthRepository.pendingRecoveryCode.collectAsState()
                 val profile by container.userProfileRepository.profile
                     .collectAsState(initial = null)
-                var showSplash by rememberSaveable { mutableStateOf(true) }
-
-                LaunchedEffect(Unit) {
-                    delay(1400)
-                    showSplash = false
-                }
 
                 // 账户删除后重新创建、或游客首次进入时，确保演示数据存在。
                 LaunchedEffect(account?.id, guest) {
@@ -65,9 +55,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (showSplash) {
-                    SplashScreen()
-                } else Surface(
+                Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
@@ -86,11 +74,7 @@ class MainActivity : ComponentActivity() {
                             onUnlocked = { locked = false }
                         )
 
-                        profile == null -> Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .isleBackground()
-                        )
+                        profile == null -> SplashScreen()
 
                         else -> IsleNavHost(
                             onLock = { locked = true },
