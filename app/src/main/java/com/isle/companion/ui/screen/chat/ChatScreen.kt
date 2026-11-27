@@ -63,7 +63,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,13 +75,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.isle.companion.ui.theme.IsleRadius
-import com.isle.companion.ui.theme.liquidGlass
-import com.isle.companion.ui.theme.liquidGlassSource
-import com.isle.companion.ui.theme.rememberLiquidGlassState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -170,7 +168,8 @@ fun ChatScreen(
     var viewerImage by remember { mutableStateOf<String?>(null) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showTraceDialog by remember { mutableStateOf(false) }
-    val hazeState = rememberLiquidGlassState()
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
 
     val accent = relationColor(character?.relationType ?: "custom")
 
@@ -194,23 +193,11 @@ fun ChatScreen(
         }
     }
 
-    // 只有用户本来就在底部时才跟随流式输出，避免把正在上滑看历史的人强行拉回
-    val shouldFollow by remember {
-        derivedStateOf {
-            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                ?: messages.lastIndex
-            messages.isEmpty() || lastVisible >= messages.lastIndex - 1
-        }
-    }
-    LaunchedEffect(messages.size) {
-        // 新增消息（用户发送 / 助手占位）时总是滚到底部
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.lastIndex)
-        }
-    }
-    LaunchedEffect(messages.lastOrNull()?.content) {
-        if (isStreaming && shouldFollow && messages.isNotEmpty()) {
-            listState.scrollToItem(messages.lastIndex)
+    // 最新消息位于反向列表的底部，流式文本增长时由布局自然保持锚点。
+    val newestMessage = messages.lastOrNull()
+    LaunchedEffect(newestMessage?.id) {
+        if (newestMessage != null) {
+            listState.scrollToItem(0)
         }
     }
 
@@ -365,10 +352,15 @@ fun ChatScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                modifier = Modifier.liquidGlass(hazeState),
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        focusManager.clearFocus(force = true)
+                        keyboard?.hide()
+                        onBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -436,10 +428,10 @@ fun ChatScreen(
         ) {
             LazyColumn(
                 state = listState,
+                reverseLayout = true,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .liquidGlassSource(hazeState),
+                    .fillMaxWidth(),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -448,7 +440,7 @@ fun ChatScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(messages, key = { it.id }) { message ->
+                items(messages.asReversed(), key = { it.id }) { message ->
                     MessageRow(
                         message = message,
                         avatarPath = character?.avatarPath,

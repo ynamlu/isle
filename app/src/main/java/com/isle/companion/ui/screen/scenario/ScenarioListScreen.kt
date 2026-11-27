@@ -15,13 +15,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -43,6 +41,7 @@ import com.isle.companion.di.appContainer
 import com.isle.companion.domain.scenario.Scenario
 import com.isle.companion.domain.scenario.ScenarioCatalog
 import com.isle.companion.ui.screen.character.CharacterListViewModel
+import com.isle.companion.ui.component.ScenarioPickerDialog
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleRadius
 import com.isle.companion.ui.theme.isleBackground
@@ -107,34 +106,14 @@ fun ScenarioListScreen(
     }
 
     pendingScenario?.let { scenario ->
-        AlertDialog(
-            onDismissRequest = { pendingScenario = null },
-            title = { Text("让谁来陪你？") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = scenario.title + " · " + scenario.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (characters.isEmpty()) {
-                        Text("先创建一个角色，再开始场景。")
-                    } else {
-                        characters.forEach { character ->
-                            TextButton(
-                                onClick = {
-                                    pendingScenario = null
-                                    onOpenScenario(character.id, scenario.id)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("${character.name} · ${relationLabel(character.relationType)}")
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {}
+        ScenarioPickerDialog(
+            scenario = scenario,
+            characters = characters,
+            onDismiss = { pendingScenario = null },
+            onSelect = { characterId ->
+                pendingScenario = null
+                onOpenScenario(characterId, scenario.id)
+            }
         )
     }
 }
@@ -175,12 +154,4 @@ private fun ScenarioCard(scenario: Scenario, onClick: () -> Unit) {
             )
         }
     }
-}
-
-private fun relationLabel(type: String): String = when (type) {
-    "bestie" -> "闺蜜"
-    "teacher" -> "老师"
-    "friend" -> "朋友"
-    "family" -> "家人"
-    else -> "自定义"
 }

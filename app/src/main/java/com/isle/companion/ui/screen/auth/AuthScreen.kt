@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.isle.companion.data.auth.AuthResult
 import com.isle.companion.data.auth.LocalAuthRepository
+import com.isle.companion.ui.component.RecoveryCodeContent
 import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleBrandBrush
@@ -392,41 +393,6 @@ private fun RecoveryContent(
     ) {
         if (busy) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         else Text("重设密码")
-    }
-}
-
-@Composable
-private fun RecoveryCodeContent(code: String, onDone: () -> Unit) {
-    Text("请保存恢复码", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-    Text(
-        "这是找回账户的唯一凭证，只显示这一次。建议抄在纸上或存进密码管理器。",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = code,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-    }
-    val context = LocalContext.current
-    TextButton(
-        onClick = {
-            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
-                as android.content.ClipboardManager
-            clipboard.setPrimaryClip(
-                android.content.ClipData.newPlainText("心屿恢复码", code)
-            )
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) { Text("复制恢复码") }
-    Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-        Text("我保存好了，进入心屿")
     }
 }
 

@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.isle.companion.data.auth.AuthResult
 import com.isle.companion.di.appContainer
+import com.isle.companion.ui.component.RecoveryCodeDialog
 import com.isle.companion.ui.component.keyboardRetryOnFocus
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleRadius
@@ -109,16 +110,21 @@ fun ProfileAccountScreen(
     }
 
     if (showRecoveryDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                if (newRecoveryCode == null) {
-                    showRecoveryDialog = false
-                    recoveryPassword = ""
-                }
-            },
-            title = { Text(if (newRecoveryCode == null) "重新生成恢复码" else "新的恢复码") },
-            text = {
-                if (newRecoveryCode == null) {
+        fun closeRecoveryDialog() {
+            showRecoveryDialog = false
+            newRecoveryCode = null
+            recoveryPassword = ""
+            recoveryMessage = null
+        }
+
+        val code = newRecoveryCode
+        if (code != null) {
+            RecoveryCodeDialog(code = code, onDone = ::closeRecoveryDialog)
+        } else {
+            AlertDialog(
+                onDismissRequest = ::closeRecoveryDialog,
+                title = { Text("重新生成恢复码") },
+                text = {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("恢复码只在生成时显示一次，应用无法查看旧码。输入当前密码后会生成新码，旧码立即失效。")
                         OutlinedTextField(
@@ -135,39 +141,14 @@ fun ProfileAccountScreen(
                             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                     }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("请现在保存，关闭后将无法再次查看。")
-                        GlassCard(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = newRecoveryCode.orEmpty(),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(18.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
-                        TextButton(
-                            onClick = {
-                                val clipboard = container.context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
-                                    as android.content.ClipboardManager
-                                clipboard.setPrimaryClip(
-                                    android.content.ClipData.newPlainText("心屿恢复码", newRecoveryCode)
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("复制恢复码") }
-                    }
-                }
-            },
-            confirmButton = {
-                if (newRecoveryCode == null) {
+                },
+                confirmButton = {
                     TextButton(
                         onClick = {
                             scope.launch {
                                 when (val result = container.localAuthRepository.regenerateRecoveryCode(recoveryPassword)) {
                                     is AuthResult.Success -> {
+                                        recoveryPassword = ""
                                         newRecoveryCode = result.recoveryCode
                                         recoveryMessage = null
                                     }
@@ -178,27 +159,10 @@ fun ProfileAccountScreen(
                         },
                         enabled = recoveryPassword.isNotBlank()
                     ) { Text("生成新恢复码") }
-                } else {
-                    TextButton(onClick = {
-                        showRecoveryDialog = false
-                        newRecoveryCode = null
-                        recoveryPassword = ""
-                        recoveryMessage = null
-                    }) { Text("我已保存") }
-                }
-            },
-            dismissButton = if (newRecoveryCode == null) {
-                {
-                    TextButton(onClick = {
-                        showRecoveryDialog = false
-                        recoveryPassword = ""
-                        recoveryMessage = null
-                    }) { Text("取消") }
-                }
-            } else {
-                null
-            }
-        )
+                },
+                dismissButton = { TextButton(onClick = ::closeRecoveryDialog) { Text("取消") } }
+            )
+        }
     }
 
     Scaffold(

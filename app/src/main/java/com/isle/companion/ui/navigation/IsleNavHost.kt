@@ -1,5 +1,7 @@
 package com.isle.companion.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -77,7 +79,15 @@ fun IsleNavHost(
         NavHost(
             navController = navController,
             startDestination = Routes.CHARACTERS,
-            modifier = Modifier.padding(bottom = padding.calculateBottomPadding())
+            modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
+            // 底栏随目标页面切换。同步换页，避免旧聊天页在新的底部留白里继续绘制。
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+            // 系统侧滑返回有独立转场，不能沿用默认缩放。
+            predictivePopEnterTransition = { _ -> EnterTransition.None },
+            predictivePopExitTransition = { _ -> ExitTransition.None }
         ) {
             composable(Routes.CHARACTERS) {
                 CharacterListScreen(

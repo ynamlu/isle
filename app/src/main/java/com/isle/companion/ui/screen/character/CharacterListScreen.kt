@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -53,6 +51,7 @@ import com.isle.companion.di.appContainer
 import com.isle.companion.domain.scenario.Scenario
 import com.isle.companion.domain.scenario.ScenarioCatalog
 import com.isle.companion.ui.component.CharacterAvatar
+import com.isle.companion.ui.component.ScenarioPickerDialog
 import com.isle.companion.ui.theme.GlassCard
 import com.isle.companion.ui.theme.IsleBrandBrush
 import com.isle.companion.ui.theme.IslePurple
@@ -162,30 +161,14 @@ fun CharacterListScreen(
     }
 
     pendingScenario?.let { scenario ->
-        AlertDialog(
-            onDismissRequest = { pendingScenario = null },
-            title = { Text("让谁来陪你？") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = scenario.title + " · " + scenario.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    characters.forEach { character ->
-                        TextButton(
-                            onClick = {
-                                pendingScenario = null
-                                onOpenScenario(character.id, scenario.id)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("${character.name} · ${relationLabel(character.relationType)}")
-                        }
-                    }
-                }
-            },
-            confirmButton = {}
+        ScenarioPickerDialog(
+            scenario = scenario,
+            characters = characters,
+            onDismiss = { pendingScenario = null },
+            onSelect = { characterId ->
+                pendingScenario = null
+                onOpenScenario(characterId, scenario.id)
+            }
         )
     }
 }
