@@ -21,10 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +34,7 @@ import com.isle.companion.ui.theme.liquidGlassSource
 import com.isle.companion.ui.theme.rememberLiquidGlassState
 
 /**
- * 「关于心屿」：项目介绍、技术亮点、开发者信息与隐私/安全说明。
+ * 「关于心屿」：项目介绍、技术亮点与隐私安全说明。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,26 +84,6 @@ fun AboutScreen(onBack: () -> Unit) {
             }
 
             GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "开发者信息",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    InfoLine("就读院校", "沧州交通学院")
-                    InfoLine("开发者", "吴思彤")
-                    InfoLine("联系方式", "ynawst@foxmail.com")
-                    InfoLine("指导老师", "徐林雪")
-                }
-            }
-
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text("隐私与安全", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(10.dp))
@@ -142,19 +120,6 @@ fun AboutScreen(onBack: () -> Unit) {
             )
         }
     }
-}
-
-@Composable
-private fun InfoLine(label: String, value: String) {
-    Text(
-        text = "$label：$value",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
-        textAlign = TextAlign.Center
-    )
 }
 
 @Composable

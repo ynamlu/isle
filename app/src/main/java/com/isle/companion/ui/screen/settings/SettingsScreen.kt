@@ -200,7 +200,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Info,
                     tint = RelationBestie,
                     title = "关于心屿",
-                    subtitle = "项目介绍、开发者信息与隐私安全",
+                    subtitle = "项目介绍、技术亮点与隐私安全",
                     onClick = onOpenAbout
                 )
             }
