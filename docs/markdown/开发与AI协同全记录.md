@@ -1,9 +1,8 @@
 ---
 title: 心屿（Isle）
 subtitle: 开发与 AI 协同全记录（合订本）
-version: v2.3.4
+version: v2.3.5
 date: 2026-11-13
-author: 沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤
 ---
 
 # 心屿（Isle）· 开发与 AI 协同全记录
@@ -520,7 +519,7 @@ https://isle-proxy.ynatech.xyz
 
 > 本文档以开发会话导出为底本，保留用户意图、AI 可见回复、关键 Prompt 与验收结论，用于回答“开发过程是否真实、Prompt 是否可复核、代码是否由 AI 一次拼接”。
 
-> **历史说明**：早期阶段曾探索年龄门、恋人角色与多 Provider；这些方向已在 v2.x 重构中移除。最终产品以 v2.3.4 的 README、技术文档和用户说明书为准。
+> **历史说明**：早期阶段曾探索年龄门、恋人角色与多 Provider；这些方向已在 v2.x 重构中移除。当前实现以 README、技术文档和用户说明书为准。
 
 > 敏感信息（API Key、Token）已脱敏；原始会话数据库不随包分发。
 
@@ -785,7 +784,7 @@ APK 涨到 **185MB** —— 因为 onnxruntime 打包了全部四种 CPU 架构�
 
 ### 👤 用户 · 第 4 轮　`10-15 16:31`
 
-> 优化设置页：补充项目介绍与开发背景，语气可以温暖一些；开发者信息写「软件工程 2410 吴思彤」。
+> 优化设置页：补充项目介绍与开发背景，语气可以温暖一些；开发者信息写「[身份信息已隐去]」。
 
 #### 🤖 AI　`10-15 16:31`
 
@@ -876,7 +875,7 @@ APK 是公开可解包的，把 Key 写进 `BuildConfig`、`strings.xml` 或 ass
 - `./gradlew assembleDebug` **BUILD SUCCESSFUL**，真机安装启动无崩溃 ✅
 
 ##### 你现在只需要做一件事
-编辑 `/Users/yna/Desktop/Isle/local.properties`，把 Key 填在这一行等号后面：
+编辑 `~/Desktop/Isle/local.properties`，把 Key 填在这一行等号后面：
 
 ```properties
 DEEPSEEK_API_KEY=sk-你的真实密钥
@@ -884,7 +883,7 @@ DEEPSEEK_API_KEY=sk-你的真实密钥
 
 然后重新构建：
 ```bash
-cd /Users/yna/Desktop/Isle && ./gradlew assembleDebug
+cd ~/Desktop/Isle && ./gradlew assembleDebug
 ```
 产物：`app/build/outputs/apk/debug/app-arm64-v8a-debug.apk`（自动带上演示密钥，评委开箱即用）
 
@@ -1568,11 +1567,11 @@ Haze 2.0.1 编译通过！现在应用到界面。先改首页。
 
 ### 👤 用户 · 第 35 轮　`10-15 17:39`
 
-> 开发者信息改为三行：沧州交通学院 / 计算机与信息技术学院 / 软件工程 2410 吴思彤。
+> 开发者信息改为三行：[身份信息已隐去]。
 
 #### 🤖 AI　`10-15 17:40`
 
-已改为三行：沧州交通学院 / 计算机与信息技术学院 / 软件工程 2410 吴思彤。构建安装后用 uiautomator 核对，真机显示正确。
+已改为三行：[身份信息已隐去]。构建安装后用 uiautomator 核对，真机显示正确。
 
 ### 👤 用户 · 第 36 轮　`10-15 17:41`
 

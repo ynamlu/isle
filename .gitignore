@@ -14,3 +14,6 @@ local.properties
 
 # Wrangler local cache
 /.wrangler/
+
+# Archify local working files
+/.archify/

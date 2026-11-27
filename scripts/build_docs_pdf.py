@@ -28,8 +28,7 @@ DOCS = [
         "pdf": "docs/pdf/技术文档-心屿.pdf",
         "title": "心屿（Isle）",
         "subtitle": "技术文档",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 技术文档",
         "icon": "../心屿-新图标.png",
     },
@@ -38,8 +37,7 @@ DOCS = [
         "pdf": "docs/pdf/需求分析.pdf",
         "title": "心屿（Isle）",
         "subtitle": "需求分析",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 需求分析",
         "icon": "../心屿-新图标.png",
     },
@@ -48,8 +46,7 @@ DOCS = [
         "pdf": "docs/pdf/测试报告.pdf",
         "title": "心屿（Isle）",
         "subtitle": "测试报告",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 测试报告",
         "icon": "../心屿-新图标.png",
     },
@@ -58,8 +55,7 @@ DOCS = [
         "pdf": "docs/pdf/用户使用说明书.pdf",
         "title": "心屿（Isle）",
         "subtitle": "用户使用说明书",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 用户使用说明书",
         "icon": "../心屿-新图标.png",
     },
@@ -68,8 +64,7 @@ DOCS = [
         "pdf": "docs/pdf/作品介绍.pdf",
         "title": "心屿（Isle）",
         "subtitle": "作品介绍",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 作品介绍",
         "icon": "../心屿-新图标.png",
     },
@@ -78,8 +73,7 @@ DOCS = [
         "pdf": "docs/pdf/开发与AI协同全记录.pdf",
         "title": "心屿（Isle）",
         "subtitle": "开发与 AI 协同全记录",
-        "version": "v2.3.4",
-        "author": "沧州交通学院 · 计算机与信息技术学院 · 软件工程 2410 · 吴思彤",
+        "version": "v2.3.5",
         "header": "心屿 · 开发与 AI 协同全记录",
         "icon": "../心屿-新图标.png",
     },
@@ -136,7 +130,6 @@ def build_html(doc: dict[str, str]) -> str:
     subtitle = meta.get("subtitle", doc["subtitle"])
     version = meta.get("version", doc["version"])
     date = meta.get("date", "2026-11-13")
-    author = meta.get("author", doc["author"])
     body = strip_before_first_h2(strip_first_h1(body))
 
     md = markdown.Markdown(
@@ -249,7 +242,7 @@ def build_html(doc: dict[str, str]) -> str:
   <div class="accent"></div>
   <div class="tagline">一座会记住你的心灵小岛<br/>面向大学生的 AI 情绪支持应用</div>
   <img src="{html.escape(icon_rel)}" alt="心屿图标"/>
-  <div class="meta">{html.escape(author)}<br/>{html.escape(version)} · {html.escape(date)}</div>
+  <div class="meta">{html.escape(version)} · {html.escape(date)}</div>
 </section>
 {toc}
 <div class="content">
