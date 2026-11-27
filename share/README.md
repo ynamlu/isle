@@ -8,7 +8,7 @@
 
 ## 部署
 
-把 `share/` 整个目录上传到静态托管，使用 `index.html` 作为入口。需要一起上传 `style.css`、`icon.png` 和 `screenshot.png`。
+把 `share/` 整个目录上传到静态托管，使用 `index.html` 作为入口。需要一起上传 `about.html`、`style.css`、`icon.png` 和 `screenshot.png`。
 
 ## 配置二维码地址
 

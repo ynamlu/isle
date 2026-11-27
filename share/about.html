@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eaf6f3">
+  <meta name="description" content="了解心屿的情绪场景、角色对话、本地记忆和情绪手账。">
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  <title>应用介绍 · 心屿 Isle</title>
+</head>
+<body>
+  <header class="shell site-header">
+    <a class="brand" href="index.html"><img src="icon.png" width="40" height="40" alt="">心屿 <span>Isle</span></a>
+    <nav aria-label="页面导航">
+      <a href="index.html">首页</a>
+      <a href="about.html" aria-current="page">应用介绍</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="about-hero" aria-labelledby="about-title">
+      <div>
+        <h1 id="about-title">认识心屿</h1>
+        <p class="lead">心屿是一款面向大学生的 Android 情绪支持应用。复习有压力、和家人吵架或晚上睡不着时，可以选一个场景，也可以直接找一个角色说说今天发生的事。</p>
+      </div>
+      <img src="icon.png" width="144" height="144" alt="">
+    </section>
+
+    <section class="guide" aria-labelledby="features-title">
+      <div>
+        <h2 id="features-title">打开后能做什么</h2>
+        <p>从第一句对话，到下一次接着聊。</p>
+      </div>
+      <div class="features">
+        <article><h3>用场景开个头</h3><p>从八个预设场景选一个。比如选「期末复习焦虑」，角色会先开场，每轮对话再推进一个小步骤。</p></article>
+        <article><h3>选熟悉的陪伴方式</h3><p>闺蜜适合聊近况，老师可以陪你理清事情，家人提供另一种倾诉对象。想自己开口时，可以直接选角色自由聊。</p></article>
+        <article><h3>下次可以接着说</h3><p>普通对话结束后，应用可提取候选记忆并保存在设备上。记忆按角色分开，你可以在「记忆」页查看、编辑或清空。</p></article>
+        <article><h3>把一句话留在相册里</h3><p>对话结束后，点击聊天页的手账入口，生成一张含金句和情绪标签的图片。保存后由你决定是否分享。</p></article>
+      </div>
+    </section>
+
+    <section class="boundary" aria-labelledby="privacy-title">
+      <h2 id="privacy-title">隐私与安全</h2>
+      <p>本地账户无需手机号或邮箱。聊天和记忆保存在设备上，生成回复或抽取记忆时，相关对话文本会发送给你配置的模型服务。</p>
+      <p>心屿提供日常情绪支持。识别到高风险表达时，应用暂停角色对话，显示固定的安全提示和真人求助入口。</p>
+    </section>
+
+    <section class="install about-install" aria-labelledby="install-title">
+      <div>
+        <h2 id="install-title">在 Android 上体验</h2>
+        <p>支持 Android 8.0 及以上版本。安装、源码构建和模型配置见项目 README。</p>
+      </div>
+      <a class="button" href="https://github.com/ynamlu/isle/tree/v2.3.5#readme">查看安装指南</a>
+    </section>
+  </main>
+</body>
+</html>

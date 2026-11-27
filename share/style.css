@@ -142,3 +142,23 @@ h2 { margin: 0 0 10px; font-size: clamp(27px, 3vw, 37px); line-height: 1.2; lett
   nav { gap: 12px; }
   .brand span { display: none; }
 }
+
+[aria-current="page"] { color: var(--accent); text-decoration: underline; text-underline-offset: 5px; }
+.about-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(24px, 6vw, 72px);
+  border-radius: 24px;
+  background: var(--water);
+}
+.about-hero img { width: clamp(64px, 16vw, 144px); height: auto; border-radius: 24%; }
+.about-hero .lead { margin-bottom: 0; }
+.features article { border-top: 1px solid var(--line); padding: 16px 0; }
+.features h3 { margin: 0 0 4px; font-size: 18px; }
+.about-install { margin-bottom: 48px; }
+@media (max-width: 480px) {
+  .about-hero { display: block; }
+  .about-hero img { margin-top: 22px; }
+}
