@@ -144,6 +144,10 @@
 
 ---
 
+## 安装正式版
+
+从 [GitHub Release](https://github.com/ynamlu/isle/releases/tag/v2.3.6) 下载签名 APK。多数 Android 手机选 `arm64-v8a`，旧 32 位设备选 `armeabi-v7a`。首次打开可先体验本地功能，联网对话在「我的 → 模型服务」配置。
+
 ## 10 分钟极速复现
 
 ### 环境要求
@@ -334,8 +338,8 @@ Isle/
 | JVM | 安全路由 / 输出校验 / 密码 / 场景 / URL / SSE / DTO | 57 项通过，3 项联网用例跳过，0 项失败 |
 | 仪器 | 记忆隔离 + 端侧向量 | 2 tests，0 failures（真机） |
 | 真机 | CPH2747 / Android 17 | 开发者已完成手动试用 |
-| 模型直连 | 千问 MaaS | `按模型服务配置执行测试连接 |
-| 包体 | arm64 debug | 约 68MB（含 ONNX 模型） |
+| 模型直连 | OpenAI 兼容服务 | 按模型服务配置执行测试连接 |
+| 正式 APK | Release 构建与签名验证 | ARM64 约 61 MiB，ARMv7 约 51 MiB |
 
 ---
 
@@ -378,7 +382,6 @@ docs/
 - 无跨设备同步 / 云备份；
 - 本地风险规则可能有误判；
 - 本地账户无法做学籍/实名核验；
-- 当前为 debug 签名，正式分发前需 release keystore；
 
 ---
 
